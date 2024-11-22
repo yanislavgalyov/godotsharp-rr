@@ -1,0 +1,42 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Godot-Mono-specific ignores
+.mono/
+*.old
+
+# vs
+.vs
+.vscode
+
+# Standard stuff
+Thumbs.db
+*.obj
+*.pdb
+*.user
+*.aps
+*.pch
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.sln.docstates
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.ilk
+*.log
+*.sbr
+obj/
+[Rr]elease*/
+_ReSharper*/
+[Tt]est[Rr]esult*
+*.vssscc
+$tf*/
+[Bb]in
+
+# vim swap files
+*.swp

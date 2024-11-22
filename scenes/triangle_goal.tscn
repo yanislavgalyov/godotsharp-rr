@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://g2uk4g43riky"]
+
+[ext_resource type="Texture2D" uid="uid://tsbsxavne0sk" path="res://assets/sheet_white1x.png" id="1_rw3gi"]
+
+[node name="TriangleGoal" type="Sprite2D"]
+texture = ExtResource("1_rw3gi")
+region_enabled = true
+region_rect = Rect2(100, 50, 50, 50)

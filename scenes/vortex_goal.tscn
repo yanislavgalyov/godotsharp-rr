@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://0h8kuhl03kin"]
+
+[ext_resource type="Texture2D" uid="uid://tsbsxavne0sk" path="res://assets/sheet_white1x.png" id="1_apx77"]
+
+[node name="VortexGoal" type="Sprite2D"]
+texture = ExtResource("1_apx77")
+region_enabled = true
+region_rect = Rect2(300, 150, 50, 50)
