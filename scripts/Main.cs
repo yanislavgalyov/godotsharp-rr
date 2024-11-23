@@ -1,13 +1,17 @@
+using System.Runtime.CompilerServices;
+
 namespace GodotSharpRR;
 
 using Godot;
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 public partial class Main : Node2D
 {
+    [Signal]
+    public delegate void BoardSolvedEventHandler();
+
     private PackedScene vortextGoalScene = ResourceLoader.Load<PackedScene>("res://scenes/vortex_goal.tscn");
     private PackedScene circleGoalScene = ResourceLoader.Load<PackedScene>("res://scenes/circle_goal.tscn");
     private PackedScene triangleGoalScene = ResourceLoader.Load<PackedScene>("res://scenes/triangle_goal.tscn");
@@ -28,9 +32,18 @@ public partial class Main : Node2D
 
     private TileMapLayer tileMapLayer = null!;
 
+    private Label totalBoards = null!;
+
+    private Label totalMoves = null!;
+
     private ROBOT? selectedRobot = ROBOT.RED;
 
-    // Called when the node enters the scene tree for the first time.
+    private int solvedBoardsCount;
+    private int totalMovesCount;
+
+    private bool isFrozen = false;
+
+
     public override void _Ready()
     {
         this.tileMapLayer = this.GetNode<TileMapLayer>("TileMapLayer");
@@ -43,9 +56,95 @@ public partial class Main : Node2D
         this.blueRobot = this.GetNode<Sprite2D>("Robots/Blue");
         this.yellowRobot = this.GetNode<Sprite2D>("Robots/Yellow");
 
-        this.countdownTimer = this.GetNode("CountdownTimer") as GodotObject;
+        this.totalBoards = this.GetNode<Label>("TotalBoards");
+        this.totalMoves = this.GetNode<Label>("TotalMoves");
+
+        this.countdownTimer = this.GetNode("CountdownTimer");
 
         this.countdownTimer.Connect("countdown_timer_done", Callable.From(this.CountdownTimerDoneHandler));
+
+        this.SetupOnce();
+        this.SetupBoard();
+
+        this.BoardSolved += this.BoardSolvedHandler;
+    }
+
+    public override void _PhysicsProcess(double delta)
+    {
+        if (Input.IsActionJustPressed("Up"))
+        {
+            MoveRobot(DIRECTION.NORTH);
+        }
+        else if (Input.IsActionJustPressed("Right"))
+        {
+            MoveRobot(DIRECTION.EAST);
+        }
+        else if (Input.IsActionJustPressed("Down"))
+        {
+            MoveRobot(DIRECTION.SOUTH);
+        }
+        else if (Input.IsActionJustPressed("Left"))
+        {
+            MoveRobot(DIRECTION.WEST);
+        }
+        else if (Input.IsActionJustPressed("Reset"))
+        {
+            // todo: reset board vs reset 2 min
+            GetTree().ReloadCurrentScene();
+        }
+
+        base._PhysicsProcess(delta);
+    }
+
+    public override void _Input(InputEvent @event)
+    {
+        if (@event.IsActionPressed("Red"))
+        {
+            this.selectedRobot = ROBOT.RED;
+        }
+        else if (@event.IsActionPressed("Green"))
+        {
+            this.selectedRobot = ROBOT.GREEN;
+        }
+        else if (@event.IsActionPressed("Blue"))
+        {
+            this.selectedRobot = ROBOT.BLUE;
+        }
+        else if (@event.IsActionPressed("Yellow"))
+        {
+            this.selectedRobot = ROBOT.YELLOW;
+        }
+        else if (@event.IsActionPressed("DebugSolve"))
+        {
+            EmitSignal(SignalName.BoardSolved);
+        }
+        // todo: undo
+
+        base._Input(@event);
+    }
+
+    private void SetupOnce()
+    {
+        this.solvedBoardsCount = 0;
+        this.totalMovesCount = 0;
+    }
+
+    private void SetupBoard()
+    {
+        foreach (Node child in this.wallsContainer.GetChildren())
+        {
+            this.wallsContainer.RemoveChild(child);
+            child.QueueFree();
+        }
+
+        foreach (Node child in this.goalsContainer.GetChildren())
+        {
+            this.goalsContainer.RemoveChild(child);
+            child.QueueFree();
+        }
+
+        this.totalBoards.Text = $"Boards: {this.solvedBoardsCount}";
+        this.totalMoves.Text = $"Moves: {this.totalMovesCount}";
 
         board = Board.CreateBoardRandom(4);
 
@@ -61,8 +160,7 @@ public partial class Main : Node2D
             if (goal == currentGoal)
             {
                 Node? currentGoalScene = this.InstantiateGoalScene(goal.Shape);
-                this.SetGoalPosition(currentGoalScene as Sprite2D, 7, 7);
-                this.SetGoalModulate(currentGoalScene as Sprite2D, goal.Robot);
+                this.SetGoal(currentGoalScene as Sprite2D, 7, 7, goal.Robot);
                 goalsContainer.AddChild(currentGoalScene);
             }
 
@@ -70,8 +168,7 @@ public partial class Main : Node2D
 
             if (goalScene != null)
             {
-                this.SetGoalPosition(goalScene as Sprite2D, goal.X, goal.Y);
-                this.SetGoalModulate(goalScene as Sprite2D, goal.Robot);
+                this.SetGoal(goalScene as Sprite2D, goal.X, goal.Y, goal.Robot);
                 goalsContainer.AddChild(goalScene);
             }
         }
@@ -80,6 +177,8 @@ public partial class Main : Node2D
         this.SetRobotPosition(ROBOT.GREEN);
         this.SetRobotPosition(ROBOT.BLUE);
         this.SetRobotPosition(ROBOT.YELLOW);
+
+        this.selectedRobot = currentGoal?.Robot ?? ROBOT.RED;
 
         var walls = board.GetWalls();
 
@@ -95,60 +194,35 @@ public partial class Main : Node2D
         }
     }
 
-    public override void _PhysicsProcess(double delta)
+    private void MoveRobot(DIRECTION direction)
     {
-        if (Input.IsActionJustPressed("Up"))
+        if (this.isFrozen)
         {
-            this.board.MoveRobot(this.selectedRobot!.Value, DIRECTION.NORTH);
-            this.SetRobotPosition(this.selectedRobot!.Value);
-        }
-        else if (Input.IsActionJustPressed("Right"))
-        {
-            this.board.MoveRobot(this.selectedRobot!.Value, DIRECTION.EAST);
-            this.SetRobotPosition(this.selectedRobot!.Value);
-        }
-        else if (Input.IsActionJustPressed("Down"))
-        {
-            this.board.MoveRobot(this.selectedRobot!.Value, DIRECTION.SOUTH);
-            this.SetRobotPosition(this.selectedRobot!.Value);
-        }
-        else if (Input.IsActionJustPressed("Left"))
-        {
-            this.board.MoveRobot(this.selectedRobot!.Value, DIRECTION.WEST);
-            this.SetRobotPosition(this.selectedRobot!.Value);
-        }
-        else if (Input.IsActionJustPressed("Reset"))
-        {
-            GetTree().ReloadCurrentScene();
+            return;
         }
 
-        base._PhysicsProcess(delta);
+        _ = this.board.MoveRobot(this.selectedRobot!.Value, direction);
+        this.SetRobotPosition(this.selectedRobot!.Value);
+
+        this.totalMovesCount++;
+        this.totalMoves.Text = $"Moves: {this.totalMovesCount}";
+
+        if (this.board.IsSolved())
+        {
+            EmitSignal(SignalName.BoardSolved);
+        }
     }
 
-    public override void _Input(InputEvent @event)
+    private void BoardSolvedHandler()
     {
-        if (@event.IsActionPressed("Red"))
-        {
-            this.selectedRobot = ROBOT.RED;
-        }
-        if (@event.IsActionPressed("Green"))
-        {
-            this.selectedRobot = ROBOT.GREEN;
-        }
-        if (@event.IsActionPressed("Blue"))
-        {
-            this.selectedRobot = ROBOT.BLUE;
-        }
-        if (@event.IsActionPressed("Yellow"))
-        {
-            this.selectedRobot = ROBOT.YELLOW;
-        }
+        this.solvedBoardsCount++;
 
-        base._Input(@event);
+        this.SetupBoard();
     }
 
     private void CountdownTimerDoneHandler()
     {
+        this.isFrozen = true;
         // todo: stop game, show result
         // this.countdownTimer.Call("reset");
     }
@@ -239,18 +313,12 @@ public partial class Main : Node2D
         _ => throw new Exception("Unknown payload type.")
     };
 
-    private void SetGoalPosition(Sprite2D? sprite, int x, int y)
+    private void SetGoal(Sprite2D? sprite, int x, int y, ROBOT robot)
     {
         if (sprite != null)
         {
             sprite.Position = this.tileMapLayer.MapToLocal(new Vector2I(x, y));
-        }
-    }
 
-    private void SetGoalModulate(Sprite2D? sprite, ROBOT robot)
-    {
-        if (sprite != null)
-        {
             switch (robot)
             {
                 case ROBOT.RED:

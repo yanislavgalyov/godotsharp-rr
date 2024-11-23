@@ -1,0 +1,96 @@
+[gd_scene load_steps=6 format=3 uid="uid://cyw2q1mo3lqne"]
+
+[ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_o0n8u"]
+
+[sub_resource type="SystemFont" id="SystemFont_w06t2"]
+font_names = PackedStringArray("Impact")
+
+[sub_resource type="SystemFont" id="SystemFont_5jwms"]
+font_names = PackedStringArray("Impact")
+
+[sub_resource type="InputEventAction" id="InputEventAction_8e3ok"]
+action = &"DebugSolve"
+
+[sub_resource type="Shortcut" id="Shortcut_xra10"]
+events = [SubResource("InputEventAction_8e3ok")]
+
+[node name="Menu" type="CanvasLayer"]
+
+[node name="MainMenu" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_o0n8u")
+
+[node name="BG" type="TextureRect" parent="MainMenu"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="MainMenu"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainMenu/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 90
+
+[node name="Separator" type="Control" parent="MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/shadow_offset_x = 12
+theme_override_constants/shadow_offset_y = 12
+theme_override_constants/outline_size = 24
+theme_override_fonts/font = SubResource("SystemFont_w06t2")
+theme_override_font_sizes/font_size = 64
+text = "Godot Ricochet robot"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MainMenu/MarginContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainMenu/MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Separator" type="Control" parent="MainMenu/MarginContainer/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="StartButton" type="Button" parent="MainMenu/MarginContainer/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(120, 32)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_5jwms")
+theme_override_font_sizes/font_size = 24
+shortcut = SubResource("Shortcut_xra10")
+text = "Start"
+
+[node name="Separator2" type="Control" parent="MainMenu/MarginContainer/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="ExitButton" type="Button" parent="MainMenu/MarginContainer/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(120, 32)
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_5jwms")
+theme_override_font_sizes/font_size = 24
+text = "Exit"

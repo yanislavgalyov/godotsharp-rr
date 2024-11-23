@@ -172,3 +172,22 @@ offset_left = 869.0
 offset_top = 400.0
 offset_right = 869.0
 offset_bottom = 400.0
+countdown_in_seconds = 120.0
+
+[node name="TotalBoards" type="Label" parent="."]
+offset_left = 875.0
+offset_top = 292.0
+offset_right = 971.0
+offset_bottom = 324.0
+scale = Vector2(1.36, 1)
+theme_override_font_sizes/font_size = 23
+text = "boards..."
+
+[node name="TotalMoves" type="Label" parent="."]
+offset_left = 875.0
+offset_top = 343.0
+offset_right = 971.0
+offset_bottom = 375.0
+scale = Vector2(1.36, 1)
+theme_override_font_sizes/font_size = 23
+text = "moves..."

@@ -48,12 +48,21 @@ public partial class Board
 
     private readonly bool isFreeStyle = true;
 
+    public bool IsSolved()
+    {
+        if (goal == null)
+        {
+            return false;
+        }
+        return goal.Position == this.robots[(int)goal.Robot];
+    }
+
     public bool[,] GetWalls()
     {
         return this.walls;
     }
 
-    public bool MoveRobot(ROBOT robot, DIRECTION direction)
+    public int MoveRobot(ROBOT robot, DIRECTION direction)
     {
         int currentPosition = this.robots[(int)robot];
         int moveToPosition = currentPosition;
@@ -84,17 +93,17 @@ public partial class Board
             if (counter > 16)
             {
                 // fail safe
-                return false;
+                return -1;
             }
         }
 
         if (moveToPosition != currentPosition)
         {
             this.robots[(int)robot] = moveToPosition;
-            return true;
+            return this.robots[(int)robot];
         }
 
-        return false;
+        return -1;
     }
 
     public (Goal?, List<Goal>) GetGoals()
