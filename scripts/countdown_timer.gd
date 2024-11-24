@@ -8,19 +8,24 @@ class_name CountdownTimer
 
 signal countdown_timer_done
 
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	timer.timeout.connect(_on_timer_timeout)
 	timer.start(countdown_in_seconds)
 
+
 func _physics_process(_delta: float) -> void:
 	label.text = time_to_string()
+
 
 func reset() -> void:
 	timer.start(countdown_in_seconds)
 
+
 func _on_timer_timeout():
 	countdown_timer_done.emit()
+
 
 func time_to_string() -> String:
 	var time_left = timer.time_left

@@ -20,6 +20,8 @@ public partial class Main : Node2D
 
     private GodotObject countdownTimer = null!;
 
+    private Node sceneCoordinator = null!;
+
     private Board board = null!;
 
     private Sprite2D redRobot = null!;
@@ -46,6 +48,8 @@ public partial class Main : Node2D
 
     public override void _Ready()
     {
+        this.sceneCoordinator = this.GetNode("/root/SceneCoordinator");
+
         this.tileMapLayer = this.GetNode<TileMapLayer>("TileMapLayer");
 
         this.goalsContainer = this.GetNode<Node2D>("Goals");
@@ -89,8 +93,7 @@ public partial class Main : Node2D
         }
         else if (Input.IsActionJustPressed("Reset"))
         {
-            // todo: reset board vs reset 2 min
-            GetTree().ReloadCurrentScene();
+            this.sceneCoordinator.Call("append_scene", "res://scenes/main.tscn");
         }
 
         base._PhysicsProcess(delta);

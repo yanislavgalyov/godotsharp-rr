@@ -40,3 +40,6 @@ $tf*/
 
 # vim swap files
 *.swp
+
+# secrets
+secrets/*.cfg

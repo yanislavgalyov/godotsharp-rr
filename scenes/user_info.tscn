@@ -1,0 +1,34 @@
+[gd_scene load_steps=2 format=3 uid="uid://1btqg1w7bafk"]
+
+[ext_resource type="Script" path="res://scripts/user_info.gd" id="1_gw1od"]
+
+[node name="CanvasLayer" type="CanvasLayer"]
+physics_interpolation_mode = 2
+
+[node name="Control" type="Control" parent="."]
+top_level = true
+z_index = 4096
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -1.0
+offset_bottom = -1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_gw1od")
+
+[node name="Label" type="Label" parent="Control"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -91.0
+offset_top = -23.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "anonymous"
+horizontal_alignment = 2

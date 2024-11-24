@@ -11,8 +11,15 @@ config_version=5
 [application]
 
 config/name="godotsharp-rr"
-run/main_scene="res://scenes/main_menu.tscn"
+run/main_scene="res://scenes/game.tscn"
 config/features=PackedStringArray("4.3", "C#", "Forward Plus")
+
+[autoload]
+
+SilentWolf="*res://addons/silent_wolf/SilentWolf.gd"
+Init="*res://scripts/init.gd"
+SceneCoordinator="*res://scripts/scene_coordinator.gd"
+Events="*res://scripts/events.gd"
 
 [display]
 
@@ -24,6 +31,10 @@ window/stretch/scale_mode="integer"
 [dotnet]
 
 project/assembly_name="godotsharp-rr"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gdscript_formatter/plugin.cfg", "res://addons/silent_wolf/plugin.cfg")
 
 [input]
 
