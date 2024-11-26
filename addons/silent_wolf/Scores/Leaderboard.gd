@@ -18,8 +18,8 @@ func _ready():
 	if ld_name in SilentWolf.Scores.leaderboards:
 		scores = SilentWolf.Scores.leaderboards[ld_name]
 	var local_scores = SilentWolf.Scores.local_scores
-	
-	if len(scores) > 0: 
+
+	if len(scores) > 0:
 		render_board(scores, local_scores)
 	else:
 		# use a signal to notify when the high scores have been returned, and show a "loading" animation until it's the case...
@@ -124,4 +124,5 @@ func _on_CloseButton_pressed() -> void:
 	var scene_name = SilentWolf.scores_config.open_scene_on_close
 	SWLogger.info("Closing SilentWolf leaderboard, switching to scene: " + str(scene_name))
 	#global.reset()
-	get_tree().change_scene_to_file(scene_name)
+	# get_tree().change_scene_to_file(scene_name)
+	SceneCoordinator.append_scene(scene_name)

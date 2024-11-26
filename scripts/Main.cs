@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 namespace GodotSharpRR;
 
 using Godot;
@@ -22,12 +20,11 @@ public partial class Main : Node2D
 
     private Node sceneCoordinator = null!;
 
+    private Node init = null!;
+
     private Board board = null!;
 
-    private Sprite2D redRobot = null!;
-    private Sprite2D greenRobot = null!;
-    private Sprite2D blueRobot = null!;
-    private Sprite2D yellowRobot = null!;
+    private Dictionary<ROBOT, Sprite2D> robotSprites = null!;
 
     private Node2D wallsContainer = null!;
     private Node2D goalsContainer = null!;
@@ -38,27 +35,35 @@ public partial class Main : Node2D
 
     private Label totalMoves = null!;
 
-    private ROBOT? selectedRobot = ROBOT.RED;
+    private ROBOT? selectedRobot;
 
     private int solvedBoardsCount;
     private int totalMovesCount;
 
+    private Stack<Board.Move> currentBoardMoves = null!;
+
     private bool isFrozen = false;
 
+    private readonly Color White = new(1, 1, 1, 1);
+    private readonly Color Transparent = new(1, 1, 1, 0);
 
     public override void _Ready()
     {
         this.sceneCoordinator = this.GetNode("/root/SceneCoordinator");
+        this.init = this.GetNode("/root/Init");
 
         this.tileMapLayer = this.GetNode<TileMapLayer>("TileMapLayer");
 
         this.goalsContainer = this.GetNode<Node2D>("Goals");
         this.wallsContainer = this.GetNode<Node2D>("Walls");
 
-        this.redRobot = this.GetNode<Sprite2D>("Robots/Red");
-        this.greenRobot = this.GetNode<Sprite2D>("Robots/Green");
-        this.blueRobot = this.GetNode<Sprite2D>("Robots/Blue");
-        this.yellowRobot = this.GetNode<Sprite2D>("Robots/Yellow");
+        this.robotSprites = new Dictionary<ROBOT, Sprite2D>
+        {
+            { ROBOT.RED, this.GetNode<Sprite2D>("Robots/Red")},
+            { ROBOT.GREEN, this.GetNode<Sprite2D>("Robots/Green")},
+            { ROBOT.BLUE, this.GetNode<Sprite2D>("Robots/Blue")},
+            { ROBOT.YELLOW, this.GetNode<Sprite2D>("Robots/Yellow")},
+        };
 
         this.totalBoards = this.GetNode<Label>("TotalBoards");
         this.totalMoves = this.GetNode<Label>("TotalMoves");
@@ -91,9 +96,13 @@ public partial class Main : Node2D
         {
             MoveRobot(DIRECTION.WEST);
         }
+        else if (Input.IsActionJustPressed("Undo"))
+        {
+            this.UndoMoveRobot();
+        }
         else if (Input.IsActionJustPressed("Reset"))
         {
-            this.sceneCoordinator.Call("append_scene", "res://scenes/main.tscn");
+            this.ResetBoard();
         }
 
         base._PhysicsProcess(delta);
@@ -103,25 +112,36 @@ public partial class Main : Node2D
     {
         if (@event.IsActionPressed("Red"))
         {
-            this.selectedRobot = ROBOT.RED;
+            this.SetSelectedRobot(ROBOT.RED);
         }
         else if (@event.IsActionPressed("Green"))
         {
-            this.selectedRobot = ROBOT.GREEN;
+            this.SetSelectedRobot(ROBOT.GREEN);
         }
         else if (@event.IsActionPressed("Blue"))
         {
-            this.selectedRobot = ROBOT.BLUE;
+            this.SetSelectedRobot(ROBOT.BLUE);
         }
         else if (@event.IsActionPressed("Yellow"))
         {
-            this.selectedRobot = ROBOT.YELLOW;
+            this.SetSelectedRobot(ROBOT.YELLOW);
+        }
+        else if (@event.IsActionPressed("Exit"))
+        {
+            this.sceneCoordinator.CallDeferred(
+                "append_scene",
+                "res://scenes/main_menu.tscn");
+        }
+        else if (@event.IsActionPressed("StartMode"))
+        {
+            this.sceneCoordinator.CallDeferred(
+                "append_scene",
+                "res://scenes/main.tscn");
         }
         else if (@event.IsActionPressed("DebugSolve"))
         {
             EmitSignal(SignalName.BoardSolved);
         }
-        // todo: undo
 
         base._Input(@event);
     }
@@ -134,6 +154,14 @@ public partial class Main : Node2D
 
     private void SetupBoard()
     {
+        this.currentBoardMoves = new Stack<Board.Move>();
+
+        foreach (var item in this.robotSprites)
+        {
+            // since robots are not added as children, have to reset their background
+            this.SetRobotShaderParam(item.Key, Transparent);
+        }
+
         foreach (Node child in this.wallsContainer.GetChildren())
         {
             this.wallsContainer.RemoveChild(child);
@@ -151,11 +179,12 @@ public partial class Main : Node2D
 
         board = Board.CreateBoardRandom(4);
 
-        (Goal? currentGoal, List<Goal> goals) = this.board.GetGoals();
+        Goal? currentGoal = this.board.GetGoal();
+        List<Goal> goals = this.board.GetAllGoals();
 
         if (currentGoal == null)
         {
-            GD.PrintErr("Missing GOAL");
+            throw new Exception("Missing goal");
         }
 
         foreach (Goal goal in goals)
@@ -173,6 +202,19 @@ public partial class Main : Node2D
             {
                 this.SetGoal(goalScene as Sprite2D, goal.X, goal.Y, goal.Robot);
                 goalsContainer.AddChild(goalScene);
+
+                if (goal == currentGoal)
+                {
+                    if (goalScene is Sprite2D sprite)
+                    {
+                        ShaderMaterial sm = new()
+                        {
+                            Shader = ResourceLoader.Load<Shader>("res://shaders/goal_background.gdshader")
+                        };
+                        sm.SetShaderParameter("background_color", White);
+                        sprite.Material = sm;
+                    }
+                }
             }
         }
 
@@ -181,7 +223,7 @@ public partial class Main : Node2D
         this.SetRobotPosition(ROBOT.BLUE);
         this.SetRobotPosition(ROBOT.YELLOW);
 
-        this.selectedRobot = currentGoal?.Robot ?? ROBOT.RED;
+        this.SetSelectedRobot(currentGoal?.Robot);
 
         var walls = board.GetWalls();
 
@@ -191,28 +233,89 @@ public partial class Main : Node2D
             {
                 if (walls[dir, pos])
                 {
-                    this.DrawWall((DIRECTION)dir, pos);
+                    this.SetWall((DIRECTION)dir, pos);
                 }
             }
         }
     }
 
-    private void MoveRobot(DIRECTION direction)
+    private void SetSelectedRobot(ROBOT? robot)
     {
-        if (this.isFrozen)
+        // vortex robot
+        if (robot.HasValue && !robot.Value.IsSingleRobot())
         {
             return;
         }
 
-        _ = this.board.MoveRobot(this.selectedRobot!.Value, direction);
-        this.SetRobotPosition(this.selectedRobot!.Value);
-
-        this.totalMovesCount++;
-        this.totalMoves.Text = $"Moves: {this.totalMovesCount}";
-
-        if (this.board.IsSolved())
+        if (this.selectedRobot.HasValue)
         {
-            EmitSignal(SignalName.BoardSolved);
+            this.SetRobotShaderParam(this.selectedRobot.Value, Transparent);
+        }
+
+        this.selectedRobot = robot;
+
+        if (this.selectedRobot.HasValue)
+        {
+            this.SetRobotShaderParam(this.selectedRobot.Value, White);
+        }
+    }
+
+    private void SetRobotShaderParam(ROBOT robot, Color color)
+    {
+        Sprite2D sprite = this.robotSprites[robot];
+        if (sprite.Material is ShaderMaterial sm)
+        {
+            sm.SetShaderParameter("background_color", color);
+        }
+    }
+
+    private void MoveRobot(DIRECTION direction)
+    {
+        if (this.isFrozen || !this.selectedRobot.HasValue)
+        {
+            return;
+        }
+
+        Board.Move? move = this.board.MoveRobot(this.selectedRobot.Value, direction);
+        if (move != null)
+        {
+            this.SetRobotPosition(this.selectedRobot.Value);
+
+            this.totalMovesCount++;
+            this.totalMoves.Text = $"Moves: {this.totalMovesCount}";
+            this.currentBoardMoves.Push(move);
+
+            if (this.board.IsSolved())
+            {
+                EmitSignal(SignalName.BoardSolved);
+            }
+        }
+    }
+
+    private void UndoMoveRobot()
+    {
+        if (this.currentBoardMoves.Count > 0)
+        {
+
+            Board.Move move = this.currentBoardMoves.Pop();
+            this.SetSelectedRobot(move.Robot);
+
+            this.board.MoveRobotToPosition(this.selectedRobot!.Value, move.OldPosition);
+            this.SetRobotPosition(this.selectedRobot.Value);
+
+            this.totalMovesCount--;
+            this.totalMoves.Text = $"Moves: {this.totalMovesCount}";
+        }
+    }
+
+    private void ResetBoard()
+    {
+        while (this.currentBoardMoves.Count > 0)
+        {
+            this.UndoMoveRobot();
+
+            Goal? currentGoal = this.board.GetGoal();
+            this.SetSelectedRobot(currentGoal?.Robot ?? null);
         }
     }
 
@@ -226,8 +329,10 @@ public partial class Main : Node2D
     private void CountdownTimerDoneHandler()
     {
         this.isFrozen = true;
-        // todo: stop game, show result
-        // this.countdownTimer.Call("reset");
+        if (this.solvedBoardsCount > 0)
+        {
+            this.init.CallDeferred("save_score", this.solvedBoardsCount);
+        }
     }
 
     private Node? InstantiateGoalScene(SHAPE shape)
@@ -256,7 +361,7 @@ public partial class Main : Node2D
         return scene;
     }
 
-    private void DrawWall(DIRECTION direction, int position)
+    private void SetWall(DIRECTION direction, int position)
     {
         Vector2I tileSize = this.tileMapLayer.TileSet.TileSize;
         int halfWidth = tileSize.X / 2;
@@ -293,28 +398,19 @@ public partial class Main : Node2D
             Line2D line = new();
             line.AddPoint(start.Value);
             line.AddPoint(end.Value);
-            line.Width = 1f;
-            line.DefaultColor = new Godot.Color(1, 1, 1);
+            line.Width = 6f;
+            line.DefaultColor = new Godot.Color(0, 0, 0);
             wallsContainer.AddChild(line);
         }
     }
 
     private void SetRobotPosition(ROBOT robot)
     {
-        Sprite2D robotSprite = this.GetRobotSprite(robot);
+        Sprite2D robotSprite = this.robotSprites[robot];
         int robotPosition = this.board.GetRobotPosition(robot);
         (int robotX, int robotY) = this.board.GetPositionAsXY(robotPosition);
         robotSprite.Position = this.tileMapLayer.MapToLocal(new Vector2I(robotX, robotY));
     }
-
-    private Sprite2D GetRobotSprite(ROBOT robot) => robot switch
-    {
-        ROBOT.RED => this.redRobot,
-        ROBOT.GREEN => this.greenRobot,
-        ROBOT.BLUE => this.blueRobot,
-        ROBOT.YELLOW => this.yellowRobot,
-        _ => throw new Exception("Unknown payload type.")
-    };
 
     private void SetGoal(Sprite2D? sprite, int x, int y, ROBOT robot)
     {

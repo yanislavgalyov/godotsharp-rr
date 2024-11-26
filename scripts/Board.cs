@@ -3,18 +3,20 @@ namespace GodotSharpRR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 
 public partial class Board
 {
+    public record Move(ROBOT Robot, int OldPosition, int NewPosition);
+
     public const int WIDTH = 16;
     public const int HEIGHT = 16;
-    public const int ROBOT_COUNT = 4;
 
     public Board()
-        : this(WIDTH, HEIGHT, ROBOT_COUNT)
+        : this(WIDTH, HEIGHT)
     { }
 
-    private Board(int width, int height, int robotCount)
+    private Board(int width, int height)
     {
         this.width = width;
         this.height = height;
@@ -26,10 +28,10 @@ public partial class Board
         this.directionIncrement[(int)DIRECTION.WEST] = -1;
         this.quadrants = new int[4];
         this.walls = new bool[4, this.width * this.height];
-        this.goals = new();
-        this.randomGoals = new();
+        this.goals = [];
+        this.randomGoals = [];
         this.goal = null;
-        this.robots = new int[robotCount];
+        this.robots = [];
     }
 
     private readonly int width;
@@ -40,7 +42,8 @@ public partial class Board
 
     private readonly int[] quadrants;
     private readonly bool[,] walls; // direction, position
-    private int[] robots; // index=robot, value=position
+
+    private Dictionary<ROBOT, int> robots;
 
     private readonly List<Goal> goals;
     private readonly List<Goal> randomGoals;
@@ -54,7 +57,10 @@ public partial class Board
         {
             return false;
         }
-        return goal.Position == this.robots[(int)goal.Robot];
+
+        return goal.Robot == ANYROBOT
+            ? this.robots.ContainsValue(goal.Position)
+            : goal.Position == this.robots[goal.Robot];
     }
 
     public bool[,] GetWalls()
@@ -62,9 +68,9 @@ public partial class Board
         return this.walls;
     }
 
-    public int MoveRobot(ROBOT robot, DIRECTION direction)
+    public Move? MoveRobot(ROBOT robot, DIRECTION direction)
     {
-        int currentPosition = this.robots[(int)robot];
+        int currentPosition = this.robots[robot];
         int moveToPosition = currentPosition;
         int tempPosition = currentPosition;
 
@@ -80,7 +86,7 @@ public partial class Board
 
             // move position and check for obstacles (robots)
             tempPosition += this.directionIncrement[(int)direction];
-            if (this.robots.Contains(tempPosition))
+            if (this.robots.ContainsValue(tempPosition))
             {
                 // new position is occupied from a robot
                 break;
@@ -90,25 +96,38 @@ public partial class Board
             moveToPosition = tempPosition;
 
             counter++;
-            if (counter > 16)
+            if ((counter > WIDTH && (direction == DIRECTION.EAST || direction == DIRECTION.WEST))
+            || (counter > HEIGHT && (direction == DIRECTION.NORTH || direction == DIRECTION.SOUTH)))
             {
-                // fail safe
-                return -1;
+                return null;
             }
         }
 
         if (moveToPosition != currentPosition)
         {
-            this.robots[(int)robot] = moveToPosition;
-            return this.robots[(int)robot];
+            this.robots[robot] = moveToPosition;
+            return new Move(robot, currentPosition, moveToPosition);
         }
 
-        return -1;
+        return null;
     }
 
-    public (Goal?, List<Goal>) GetGoals()
+    public void MoveRobotToPosition(ROBOT robot, int position)
     {
-        return (this.goal, this.goals);
+        if (!this.IsRobotPos(position))
+        {
+            this.robots[robot] = position;
+        }
+    }
+
+    public Goal? GetGoal()
+    {
+        return this.goal;
+    }
+
+    public List<Goal> GetAllGoals()
+    {
+        return this.goals;
     }
 
     public (int, int) GetPositionAsXY(int position)
@@ -121,7 +140,7 @@ public partial class Board
 
     public int GetRobotPosition(ROBOT robot)
     {
-        return this.robots[(int)robot];
+        return this.robots[robot];
     }
 
     public static Board CreateBoardRandom(int numRobots)
@@ -133,25 +152,23 @@ public partial class Board
             indexList[0] + Random.Shared.Next(3 + 1) * 4,
             indexList[1] + Random.Shared.Next(3 + 1) * 4,
             indexList[2] + Random.Shared.Next(3 + 1) * 4,
-            indexList[3] + Random.Shared.Next(3 + 1) * 4,
-            numRobots);
+            indexList[3] + Random.Shared.Next(3 + 1) * 4);
     }
 
     public static Board CreateBoardQuadrants(
         int quadrantNW,
         int quadrantNE,
         int quadrantSE,
-        int quadrantSW,
-        int numRobots)
+        int quadrantSW)
     {
-        Board b = new(WIDTH, HEIGHT, numRobots);
+        Board b = new(WIDTH, HEIGHT);
         //add walls and goals
         b.AddQuadrant(quadrantNW, 0);
         b.AddQuadrant(quadrantNE, 1);
         b.AddQuadrant(quadrantSE, 2);
         b.AddQuadrant(quadrantSW, 3);
         b.AddOuterWalls();
-        b.SetRobots(numRobots);
+        b.SetRobots();
         b.SetGoalRandom();
 
         return b;
@@ -161,9 +178,14 @@ public partial class Board
 
     private bool IsSolution01()
     {
-        for (int robo = 0; robo < this.robots.Length; ++robo)
+        if (this.goal == null)
         {
-            if (((int)this.goal!.Robot != robo) && ((int)this.goal.Robot != -1))
+            return false;
+        }
+
+        foreach (var robo in this.robots.Keys)
+        {
+            if (this.goal.Robot != robo && (int)this.goal.Robot != (int)ANYROBOT)
             {
                 continue; // skip because it's not the goal robot
             }
@@ -174,6 +196,7 @@ public partial class Board
             {
                 return true; // already on goal
             }
+
             int dir = -1;
             foreach (int dirIncr in this.directionIncrement)
             {
@@ -207,12 +230,13 @@ public partial class Board
                 }
             }
         }
+
         return false;
     }
 
-    private void SetRobots(int numRobots)
+    private void SetRobots()
     {
-        this.robots = new int[numRobots];
+        this.robots = [];
         if (this.isFreeStyle)
         {
             this.SetRobotsRandom();
@@ -220,53 +244,44 @@ public partial class Board
         else
         {
             //original board / made out of quadrants
-            this.SetRobot(0, 14 + 2 * this.width, false); //R
-            this.SetRobot(1, 1 + 2 * this.width, false); //G
-            this.SetRobot(2, 13 + 11 * this.width, false); //B
-            this.SetRobot(3, 15 + 0 * this.width, false); //Y
-            this.SetRobot(4, 15 + 7 * this.width, false); //S
+            this.SetRobot(ROBOT.RED, 14 + 2 * this.width); //R
+            this.SetRobot(ROBOT.GREEN, 1 + 2 * this.width); //G
+            this.SetRobot(ROBOT.BLUE, 13 + 11 * this.width); //B
+            this.SetRobot(ROBOT.YELLOW, 15 + 0 * this.width); //Y
+            this.SetRobot(ROBOT.SILVER, 15 + 7 * this.width); //S
         }
     }
 
     public void SetRobotsRandom()
     {
+        ROBOT[] RGBY = [ROBOT.RED, ROBOT.GREEN, ROBOT.BLUE, ROBOT.YELLOW];
         do
         {
-            System.Array.Fill(this.robots, -1);
-            for (int i = 0; i < this.robots.Length; ++i)
+            foreach (ROBOT robot in RGBY)
             {
                 int position;
                 do
                 {
                     position = Random.Shared.Next(this.size);
-                } while (false == this.SetRobot(i, position, false));
+                } while (false == this.SetRobot(robot, position));
             }
-        } while (true == this.IsSolution01());
+        } while (this.IsSolution01());
     }
 
-    private bool SetRobot(int robot, int position, bool allowSwapRobots)
+
+    private bool SetRobot(ROBOT robot, int position)
     {
-        //invalid robot number?
-        //impossible position (out of bounds or obstacle)?
-        if ((robot < 0)
-            || (robot >= this.robots.Length)
-            || (position < 0)
-            || (position >= this.size)
+        if (robot < 0
+            || !robot.IsSingleRobot()  // enum has a single set bit
+            || position < 0
+            || position >= this.size
             || this.IsObstacle(position)
-            || ((false == allowSwapRobots) && (this.GetRobotNum(position) >= 0) && (this.GetRobotNum(position) != robot)))
+            || this.robots.ContainsValue(position))
         {
             return false;
         }
         else
         {
-            //position already occupied by another robot?
-            int otherRobot = this.GetRobotNum(position);
-            int oldPosition = this.robots[robot];
-            if ((otherRobot >= 0) && (otherRobot != robot) && (oldPosition >= 0))
-            {
-                this.robots[otherRobot] = oldPosition;
-            }
-            //set this robot's position
             this.robots[robot] = position;
             return true;
         }
@@ -274,21 +289,7 @@ public partial class Board
 
     private bool IsRobotPos(int position)
     {
-        return this.robots.Contains(position);
-    }
-
-    private int GetRobotNum(int position)
-    {
-        int robotNum = -1;  //default: not found
-        for (int i = 0; i < this.robots.Length; ++i)
-        {
-            if (this.robots[i] == position)
-            {
-                robotNum = i;
-                break;
-            }
-        }
-        return robotNum;
+        return this.robots.ContainsValue(position);
     }
 
     #endregion
@@ -459,11 +460,6 @@ public partial class Board
         this.goal = this.randomGoals[0];
         this.randomGoals.RemoveAt(0);
 
-        if ((int)this.goal.Robot >= this.robots.Length)
-        {
-            this.SetGoalRandom();
-        }
-
         if (this.IsSolution01() && (this.randomGoals.Count > 0))
         {
             //the resulting board configuration has a solution of 0 or 1 move
@@ -472,11 +468,6 @@ public partial class Board
             this.SetGoalRandom();
             this.randomGoals.Add(lastResortGoal);
         }
-    }
-
-    private Board AddGoal(int x, int y, int robot, SHAPE shape)
-    {
-        return this.AddGoal(x, y, (ROBOT)robot, shape);
     }
 
     private Board AddGoal(int x, int y, ROBOT robot, SHAPE shape)
@@ -493,146 +484,141 @@ public partial class Board
 
     #endregion
 
-    public readonly static string[] QUADRANT_NAMES = {
-        "1A", "2A", "3A", "4A",
-        "1B", "2B", "3B", "4B",
-        "1C", "2C", "3C", "4C",
-        "1D", "2D", "3D", "4D"
-    };
+    private const ROBOT ANYROBOT = ROBOT.RED | ROBOT.GREEN | ROBOT.BLUE | ROBOT.YELLOW;
 
-    private readonly static Board[] QUADRANTS = new Board[16]
-    {
-        new Board(WIDTH, HEIGHT, ROBOT_COUNT) //1A
+    private readonly static Board[] QUADRANTS =
+    [
+        new Board(WIDTH, HEIGHT) //1A
             .AddWall(1, 0, "E")
-            .AddWall(4, 1, "NW")  .AddGoal(4, 1, 0, SHAPE.CIRCLE)      //R
-            .AddWall(1, 2, "NE")  .AddGoal(1, 2, 1, SHAPE.TRIANGLE)    //G
-            .AddWall(6, 3, "SE")  .AddGoal(6, 3, 3, SHAPE.HEXAGON)     //Y
+            .AddWall(4, 1, "NW").AddGoal(4, 1, ROBOT.RED, SHAPE.CIRCLE)      //R
+            .AddWall(1, 2, "NE").AddGoal(1, 2, ROBOT.GREEN, SHAPE.TRIANGLE)    //G
+            .AddWall(6, 3, "SE").AddGoal(6, 3, ROBOT.YELLOW, SHAPE.HEXAGON)     //Y
             .AddWall(0, 5, "S")
-            .AddWall(3, 6, "SW")  .AddGoal(3, 6, 2, SHAPE.SQUARE)      //B
+            .AddWall(3, 6, "SW").AddGoal(3, 6, ROBOT.BLUE, SHAPE.SQUARE)      //B
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //2A
+        new Board(WIDTH, HEIGHT) //2A
             .AddWall(3, 0, "E")
-            .AddWall(5, 1, "SE")  .AddGoal(5, 1, 1, SHAPE.HEXAGON)     //G
-            .AddWall(1, 2, "SW")  .AddGoal(1, 2, 0, SHAPE.SQUARE)      //R
+            .AddWall(5, 1, "SE").AddGoal(5, 1, ROBOT.GREEN, SHAPE.HEXAGON)     //G
+            .AddWall(1, 2, "SW").AddGoal(1, 2, ROBOT.RED, SHAPE.SQUARE)      //R
             .AddWall(0, 3, "S")
-            .AddWall(6, 4, "NW")  .AddGoal(6, 4, 3, SHAPE.CIRCLE)      //Y
-            .AddWall(2, 6, "NE")  .AddGoal(2, 6, 2, SHAPE.TRIANGLE)    //B
+            .AddWall(6, 4, "NW").AddGoal(6, 4, ROBOT.YELLOW, SHAPE.CIRCLE)      //Y
+            .AddWall(2, 6, "NE").AddGoal(2, 6, ROBOT.BLUE, SHAPE.TRIANGLE)    //B
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //3A
+        new Board(WIDTH, HEIGHT) //3A
             .AddWall(3, 0, "E")
-            .AddWall(5, 2, "SE")  .AddGoal(5, 2, 2, SHAPE.HEXAGON)     //B
+            .AddWall(5, 2, "SE").AddGoal(5, 2, ROBOT.BLUE, SHAPE.HEXAGON)     //B
             .AddWall(0, 4, "S")
-            .AddWall(2, 4, "NE")  .AddGoal(2, 4, 1, SHAPE.CIRCLE)      //G
-            .AddWall(7, 5, "SW")  .AddGoal(7, 5, 0, SHAPE.TRIANGLE)    //R
-            .AddWall(1, 6, "NW")  .AddGoal(1, 6, 3, SHAPE.SQUARE)      //Y
+            .AddWall(2, 4, "NE").AddGoal(2, 4, ROBOT.GREEN, SHAPE.CIRCLE)      //G
+            .AddWall(7, 5, "SW").AddGoal(7, 5, ROBOT.RED, SHAPE.TRIANGLE)    //R
+            .AddWall(1, 6, "NW").AddGoal(1, 6, ROBOT.YELLOW, SHAPE.SQUARE)      //Y
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //4A
+        new Board(WIDTH, HEIGHT) //4A
             .AddWall(3, 0, "E")
-            .AddWall(6, 1, "SW")  .AddGoal(6, 1, 2, SHAPE.CIRCLE)      //B
-            .AddWall(1, 3, "NE")  .AddGoal(1, 3, 3, SHAPE.TRIANGLE)    //Y
-            .AddWall(5, 4, "NW")  .AddGoal(5, 4, 1, SHAPE.SQUARE)      //G
-            .AddWall(2, 5, "SE")  .AddGoal(2, 5, 0, SHAPE.HEXAGON)     //R
-            .AddWall(7, 5, "SE")  .AddGoal(7, 5, -1, SHAPE.VORTEX)     //W*
+            .AddWall(6, 1, "SW").AddGoal(6, 1, ROBOT.BLUE, SHAPE.CIRCLE)      //B
+            .AddWall(1, 3, "NE").AddGoal(1, 3, ROBOT.YELLOW, SHAPE.TRIANGLE)    //Y
+            .AddWall(5, 4, "NW").AddGoal(5, 4, ROBOT.GREEN, SHAPE.SQUARE)      //G
+            .AddWall(2, 5, "SE").AddGoal(2, 5, ROBOT.RED, SHAPE.HEXAGON)     //R
+            .AddWall(7, 5, "SE").AddGoal(7, 5, ANYROBOT, SHAPE.VORTEX)     //W*
             .AddWall(0, 6, "S")
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //1B
+        new Board(WIDTH, HEIGHT) //1B
             .AddWall(4, 0, "E")
-            .AddWall(6, 1, "SE")  .AddGoal(6, 1, 3, SHAPE.HEXAGON)     //Y
-            .AddWall(1, 2, "NW")  .AddGoal(1, 2, 1, SHAPE.TRIANGLE)    //G
+            .AddWall(6, 1, "SE").AddGoal(6, 1, ROBOT.YELLOW, SHAPE.HEXAGON)     //Y
+            .AddWall(1, 2, "NW").AddGoal(1, 2, ROBOT.GREEN, SHAPE.TRIANGLE)    //G
             .AddWall(0, 5, "S")
-            .AddWall(6, 5, "NE")  .AddGoal(6, 5, 2, SHAPE.SQUARE)      //B
-            .AddWall(3, 6, "SW")  .AddGoal(3, 6, 0, SHAPE.CIRCLE)      //R
+            .AddWall(6, 5, "NE").AddGoal(6, 5, ROBOT.BLUE, SHAPE.SQUARE)      //B
+            .AddWall(3, 6, "SW").AddGoal(3, 6, ROBOT.RED, SHAPE.CIRCLE)      //R
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //2B
+        new Board(WIDTH, HEIGHT) //2B
             .AddWall(4, 0, "E")
-            .AddWall(2, 1, "NW")  .AddGoal(2, 1, 3, SHAPE.CIRCLE)      //Y
-            .AddWall(6, 3, "SW")  .AddGoal(6, 3, 2, SHAPE.TRIANGLE)    //B
+            .AddWall(2, 1, "NW").AddGoal(2, 1, ROBOT.YELLOW, SHAPE.CIRCLE)      //Y
+            .AddWall(6, 3, "SW").AddGoal(6, 3, ROBOT.BLUE, SHAPE.TRIANGLE)    //B
             .AddWall(0, 4, "S")
-            .AddWall(4, 5, "NE")  .AddGoal(4, 5, 0, SHAPE.SQUARE)      //R
-            .AddWall(1, 6, "SE")  .AddGoal(1, 6, 1, SHAPE.HEXAGON)     //G
+            .AddWall(4, 5, "NE").AddGoal(4, 5, ROBOT.RED, SHAPE.SQUARE)      //R
+            .AddWall(1, 6, "SE").AddGoal(1, 6, ROBOT.GREEN, SHAPE.HEXAGON)     //G
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //3B
+        new Board(WIDTH, HEIGHT) //3B
             .AddWall(3, 0, "E")
-            .AddWall(1, 1, "SW")  .AddGoal(1, 1, 0, SHAPE.TRIANGLE)    //R
-            .AddWall(6, 2, "NE")  .AddGoal(6, 2, 1, SHAPE.CIRCLE)      //G
-            .AddWall(2, 4, "SE")  .AddGoal(2, 4, 2, SHAPE.HEXAGON)     //B
+            .AddWall(1, 1, "SW").AddGoal(1, 1, ROBOT.RED, SHAPE.TRIANGLE)    //R
+            .AddWall(6, 2, "NE").AddGoal(6, 2, ROBOT.GREEN, SHAPE.CIRCLE)      //G
+            .AddWall(2, 4, "SE").AddGoal(2, 4, ROBOT.BLUE, SHAPE.HEXAGON)     //B
             .AddWall(0, 5, "S")
-            .AddWall(7, 5, "NW")  .AddGoal(7, 5, 3, SHAPE.SQUARE)      //Y
+            .AddWall(7, 5, "NW").AddGoal(7, 5, ROBOT.YELLOW, SHAPE.SQUARE)      //Y
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //4B
+        new Board(WIDTH, HEIGHT) //4B
             .AddWall(4, 0, "E")
-            .AddWall(2, 1, "SE")  .AddGoal(2, 1, 0, SHAPE.HEXAGON)     //R
-            .AddWall(1, 3, "SW")  .AddGoal(1, 3, 1, SHAPE.SQUARE)      //G
+            .AddWall(2, 1, "SE").AddGoal(2, 1, ROBOT.RED, SHAPE.HEXAGON)     //R
+            .AddWall(1, 3, "SW").AddGoal(1, 3, ROBOT.GREEN, SHAPE.SQUARE)      //G
             .AddWall(0, 4, "S")
-            .AddWall(6, 4, "NW")  .AddGoal(6, 4, 3, SHAPE.TRIANGLE)    //Y
-            .AddWall(5, 6, "NE")  .AddGoal(5, 6, 2, SHAPE.CIRCLE)      //B
-            .AddWall(3, 7, "SE")  .AddGoal(3, 7, -1, SHAPE.VORTEX)     //W*
+            .AddWall(6, 4, "NW").AddGoal(6, 4, ROBOT.YELLOW, SHAPE.TRIANGLE)    //Y
+            .AddWall(5, 6, "NE").AddGoal(5, 6, ROBOT.BLUE, SHAPE.CIRCLE)      //B
+            .AddWall(3, 7, "SE").AddGoal(3, 7, ANYROBOT, SHAPE.VORTEX)     //W*
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //1C
+        new Board(WIDTH, HEIGHT) //1C
             .AddWall(1, 0, "E")
-            .AddWall(3, 1, "NW")  .AddGoal(3, 1, 1, SHAPE.TRIANGLE)    //G
-            .AddWall(6, 3, "SE")  .AddGoal(6, 3, 3, SHAPE.HEXAGON)     //Y
-            .AddWall(1, 4, "SW")  .AddGoal(1, 4, 0, SHAPE.CIRCLE)      //R
+            .AddWall(3, 1, "NW").AddGoal(3, 1, ROBOT.GREEN, SHAPE.TRIANGLE)    //G
+            .AddWall(6, 3, "SE").AddGoal(6, 3, ROBOT.YELLOW, SHAPE.HEXAGON)     //Y
+            .AddWall(1, 4, "SW").AddGoal(1, 4, ROBOT.RED, SHAPE.CIRCLE)      //R
             .AddWall(0, 6, "S")
-            .AddWall(4, 6, "NE")  .AddGoal(4, 6, 2, SHAPE.SQUARE)      //B
+            .AddWall(4, 6, "NE").AddGoal(4, 6, ROBOT.BLUE, SHAPE.SQUARE)      //B
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //2C
+        new Board(WIDTH, HEIGHT) //2C
             .AddWall(5, 0, "E")
-            .AddWall(3, 2, "NW")  .AddGoal(3, 2, 3, SHAPE.CIRCLE)      //Y
+            .AddWall(3, 2, "NW").AddGoal(3, 2, ROBOT.YELLOW, SHAPE.CIRCLE)      //Y
             .AddWall(0, 3, "S")
-            .AddWall(5, 3, "SW")  .AddGoal(5, 3, 2, SHAPE.TRIANGLE)    //B
-            .AddWall(2, 4, "NE")  .AddGoal(2, 4, 0, SHAPE.SQUARE)      //R
-            .AddWall(4, 5, "SE")  .AddGoal(4, 5, 1, SHAPE.HEXAGON)     //G
+            .AddWall(5, 3, "SW").AddGoal(5, 3, ROBOT.BLUE, SHAPE.TRIANGLE)    //B
+            .AddWall(2, 4, "NE").AddGoal(2, 4, ROBOT.RED, SHAPE.SQUARE)      //R
+            .AddWall(4, 5, "SE").AddGoal(4, 5, ROBOT.GREEN, SHAPE.HEXAGON)     //G
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //3C
+        new Board(WIDTH, HEIGHT) //3C
             .AddWall(1, 0, "E")
-            .AddWall(4, 1, "NE")  .AddGoal(4, 1, 1, SHAPE.CIRCLE)      //G
-            .AddWall(1, 3, "SW")  .AddGoal(1, 3, 0, SHAPE.TRIANGLE)    //R
+            .AddWall(4, 1, "NE").AddGoal(4, 1, ROBOT.GREEN, SHAPE.CIRCLE)      //G
+            .AddWall(1, 3, "SW").AddGoal(1, 3, ROBOT.RED, SHAPE.TRIANGLE)    //R
             .AddWall(0, 5, "S")
-            .AddWall(5, 5, "NW")  .AddGoal(5, 5, 3, SHAPE.SQUARE)      //Y
-            .AddWall(3, 6, "SE")  .AddGoal(3, 6, 2, SHAPE.HEXAGON)     //B
+            .AddWall(5, 5, "NW").AddGoal(5, 5, ROBOT.YELLOW, SHAPE.SQUARE)      //Y
+            .AddWall(3, 6, "SE").AddGoal(3, 6, ROBOT.BLUE, SHAPE.HEXAGON)     //B
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //4C
+        new Board(WIDTH, HEIGHT) //4C
             .AddWall(2, 0, "E")
-            .AddWall(5, 1, "SW")  .AddGoal(5, 1, 2, SHAPE.CIRCLE)      //B
-            .AddWall(7, 2, "SE")  .AddGoal(7, 2, -1, SHAPE.VORTEX)     //W*
+            .AddWall(5, 1, "SW").AddGoal(5, 1, ROBOT.BLUE, SHAPE.CIRCLE)      //B
+            .AddWall(7, 2, "SE").AddGoal(7, 2, ANYROBOT, SHAPE.VORTEX)     //W*
             .AddWall(0, 3, "S")
-            .AddWall(3, 4, "SE")  .AddGoal(3, 4, 0, SHAPE.HEXAGON)     //R
-            .AddWall(6, 5, "NW")  .AddGoal(6, 5, 1, SHAPE.SQUARE)      //G
-            .AddWall(1, 6, "NE")  .AddGoal(1, 6, 3, SHAPE.TRIANGLE)    //Y
+            .AddWall(3, 4, "SE").AddGoal(3, 4, ROBOT.RED, SHAPE.HEXAGON)     //R
+            .AddWall(6, 5, "NW").AddGoal(6, 5, ROBOT.GREEN, SHAPE.SQUARE)      //G
+            .AddWall(1, 6, "NE").AddGoal(1, 6, ROBOT.YELLOW, SHAPE.TRIANGLE)    //Y
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //1D
+        new Board(WIDTH, HEIGHT) //1D
             .AddWall(5, 0, "E")
-            .AddWall(1, 3, "NW")  .AddGoal(1, 3, 0, SHAPE.CIRCLE)      //R
-            .AddWall(6, 4, "SE")  .AddGoal(6, 4, 3, SHAPE.HEXAGON)     //Y
+            .AddWall(1, 3, "NW").AddGoal(1, 3, ROBOT.RED, SHAPE.CIRCLE)      //R
+            .AddWall(6, 4, "SE").AddGoal(6, 4, ROBOT.YELLOW, SHAPE.HEXAGON)     //Y
             .AddWall(0, 5, "S")
-            .AddWall(2, 6, "NE")  .AddGoal(2, 6, 1, SHAPE.TRIANGLE)    //G
-            .AddWall(3, 6, "SW")  .AddGoal(3, 6, 2, SHAPE.SQUARE)      //B
+            .AddWall(2, 6, "NE").AddGoal(2, 6, ROBOT.GREEN, SHAPE.TRIANGLE)    //G
+            .AddWall(3, 6, "SW").AddGoal(3, 6, ROBOT.BLUE, SHAPE.SQUARE)      //B
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //2D
+        new Board(WIDTH, HEIGHT) //2D
             .AddWall(2, 0, "E")
-            .AddWall(5, 2, "SE")  .AddGoal(5, 2, 1, SHAPE.HEXAGON)     //G
-            .AddWall(6, 2, "NW")  .AddGoal(6, 2, 3, SHAPE.CIRCLE)      //Y
-            .AddWall(1, 5, "SW")  .AddGoal(1, 5, 0, SHAPE.SQUARE)      //R
+            .AddWall(5, 2, "SE").AddGoal(5, 2, ROBOT.GREEN, SHAPE.HEXAGON)     //G
+            .AddWall(6, 2, "NW").AddGoal(6, 2, ROBOT.YELLOW, SHAPE.CIRCLE)      //Y
+            .AddWall(1, 5, "SW").AddGoal(1, 5, ROBOT.RED, SHAPE.SQUARE)      //R
             .AddWall(0, 6, "S")
-            .AddWall(4, 7, "NE")  .AddGoal(4, 7, 2, SHAPE.TRIANGLE)    //B
+            .AddWall(4, 7, "NE").AddGoal(4, 7, ROBOT.BLUE, SHAPE.TRIANGLE)    //B
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //3D
+        new Board(WIDTH, HEIGHT) //3D
             .AddWall(4, 0, "E")
             .AddWall(0, 2, "S")
-            .AddWall(6, 2, "SE")  .AddGoal(6, 2, 2, SHAPE.HEXAGON)     //B
-            .AddWall(2, 4, "NE")  .AddGoal(2, 4, 1, SHAPE.CIRCLE)      //G
-            .AddWall(3, 4, "SW")  .AddGoal(3, 4, 0, SHAPE.TRIANGLE)    //R
-            .AddWall(5, 6, "NW")  .AddGoal(5, 6, 3, SHAPE.SQUARE)      //Y
+            .AddWall(6, 2, "SE").AddGoal(6, 2, ROBOT.BLUE, SHAPE.HEXAGON)     //B
+            .AddWall(2, 4, "NE").AddGoal(2, 4, ROBOT.GREEN, SHAPE.CIRCLE)      //G
+            .AddWall(3, 4, "SW").AddGoal(3, 4, ROBOT.RED, SHAPE.TRIANGLE)    //R
+            .AddWall(5, 6, "NW").AddGoal(5, 6, ROBOT.YELLOW, SHAPE.SQUARE)      //Y
             .AddWall(7, 7, "NESW"),
-    new Board(WIDTH, HEIGHT, ROBOT_COUNT) //4D
+        new Board(WIDTH, HEIGHT) //4D
             .AddWall(4, 0, "E")
-            .AddWall(6, 2, "NW")  .AddGoal(6, 2, 3, SHAPE.TRIANGLE)    //Y
-            .AddWall(2, 3, "NE")  .AddGoal(2, 3, 2, SHAPE.CIRCLE)      //B
-            .AddWall(3, 3, "SW")  .AddGoal(3, 3, 1, SHAPE.SQUARE)      //G
-            .AddWall(1, 5, "SE")  .AddGoal(1, 5, 0, SHAPE.HEXAGON)     //R
+            .AddWall(6, 2, "NW").AddGoal(6, 2, ROBOT.YELLOW, SHAPE.TRIANGLE)    //Y
+            .AddWall(2, 3, "NE").AddGoal(2, 3, ROBOT.BLUE, SHAPE.CIRCLE)      //B
+            .AddWall(3, 3, "SW").AddGoal(3, 3, ROBOT.GREEN, SHAPE.SQUARE)      //G
+            .AddWall(1, 5, "SE").AddGoal(1, 5, ROBOT.RED, SHAPE.HEXAGON)     //R
             .AddWall(0, 6, "S")
-            .AddWall(5, 7, "SE")  .AddGoal(5, 7, -1, SHAPE.VORTEX)     //W*
+            .AddWall(5, 7, "SE").AddGoal(5, 7, ANYROBOT, SHAPE.VORTEX)     //W*
             .AddWall(7, 7, "NESW"),
-    };
+    ];
 }

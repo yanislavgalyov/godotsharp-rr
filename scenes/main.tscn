@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=4 uid="uid://crfvbfcdm3bin"]
+[gd_scene load_steps=11 format=4 uid="uid://crfvbfcdm3bin"]
 
 [ext_resource type="Script" path="res://scripts/Main.cs" id="1_ubo3h"]
 [ext_resource type="Texture2D" uid="uid://tsbsxavne0sk" path="res://assets/sheet_white1x.png" id="2_m0slk"]
 [ext_resource type="PackedScene" uid="uid://ckf8ybfq0luym" path="res://scenes/countdown_timer.tscn" id="3_cl7bl"]
+[ext_resource type="Shader" path="res://shaders/goal_background.gdshader" id="3_dq4c0"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fhvul"]
 texture = ExtResource("2_m0slk")
@@ -117,6 +118,22 @@ texture_region_size = Vector2i(50, 50)
 tile_size = Vector2i(50, 50)
 sources/0 = SubResource("TileSetAtlasSource_fhvul")
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ol0q8"]
+shader = ExtResource("3_dq4c0")
+shader_parameter/background_color = Color(1, 1, 1, 0)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xcn4u"]
+shader = ExtResource("3_dq4c0")
+shader_parameter/background_color = Color(1, 1, 1, 0)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6l76c"]
+shader = ExtResource("3_dq4c0")
+shader_parameter/background_color = Color(1, 1, 1, 0)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_8gp7x"]
+shader = ExtResource("3_dq4c0")
+shader_parameter/background_color = Color(1, 1, 1, 0)
+
 [node name="Play" type="Node2D"]
 position = Vector2(-1, 0)
 script = ExtResource("1_ubo3h")
@@ -130,39 +147,43 @@ tile_set = SubResource("TileSet_4pq1o")
 visible = false
 tile_set = SubResource("TileSet_4pq1o")
 
-[node name="Walls" type="Node2D" parent="."]
-
 [node name="Goals" type="Node2D" parent="."]
 
 [node name="Robots" type="Node2D" parent="."]
 
 [node name="Red" type="Sprite2D" parent="Robots"]
 modulate = Color(1, 0, 0, 1)
-position = Vector2(-100, -100)
+material = SubResource("ShaderMaterial_ol0q8")
+position = Vector2(30, -40)
 texture = ExtResource("2_m0slk")
 region_enabled = true
 region_rect = Rect2(150, 50, 50, 50)
 
 [node name="Green" type="Sprite2D" parent="Robots"]
 modulate = Color(0, 1, 0, 1)
-position = Vector2(-100, -100)
+material = SubResource("ShaderMaterial_xcn4u")
+position = Vector2(90, -40)
 texture = ExtResource("2_m0slk")
 region_enabled = true
 region_rect = Rect2(150, 50, 50, 50)
 
 [node name="Blue" type="Sprite2D" parent="Robots"]
 modulate = Color(0, 0, 1, 1)
-position = Vector2(-100, -100)
+material = SubResource("ShaderMaterial_6l76c")
+position = Vector2(150, -40)
 texture = ExtResource("2_m0slk")
 region_enabled = true
 region_rect = Rect2(150, 50, 50, 50)
 
 [node name="Yellow" type="Sprite2D" parent="Robots"]
 modulate = Color(1, 1, 0, 1)
-position = Vector2(-100, -100)
+material = SubResource("ShaderMaterial_8gp7x")
+position = Vector2(210, -40)
 texture = ExtResource("2_m0slk")
 region_enabled = true
 region_rect = Rect2(150, 50, 50, 50)
+
+[node name="Walls" type="Node2D" parent="."]
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(401, 402)

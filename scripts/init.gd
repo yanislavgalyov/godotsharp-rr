@@ -1,14 +1,16 @@
 extends Node
 
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	configure_silent_wolf()
+
 
 func configure_silent_wolf() -> void:
 	var sw_secret_config: ConfigFile = ConfigFile.new()
 	var err: Error = sw_secret_config.load("res://secrets/silent_wolf.cfg")
 
-	if (err != OK):
+	if err != OK:
 		return
 
 	var section: String = sw_secret_config.get_sections()[0]
@@ -20,3 +22,9 @@ func configure_silent_wolf() -> void:
 	SilentWolf.auth_config.redirect_to_scene = "res://scenes/main_menu.tscn"
 
 	SilentWolf.Auth.auto_login_player()
+
+
+func save_score(score: int) -> void:
+	if SilentWolf.Auth.logged_in_player:
+		var sw_result: Dictionary = await SilentWolf.Scores.save_score(SilentWolf.Auth.logged_in_player, score).sw_save_score_complete
+		print("Score persisted successfully: " + str(sw_result.score_id))

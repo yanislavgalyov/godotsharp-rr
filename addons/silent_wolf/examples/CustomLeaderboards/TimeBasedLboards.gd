@@ -9,12 +9,12 @@ var scores = []
 
 func _ready():
 	SilentWolf.Scores.sw_get_scores_complete.connect(_on_scores_received)
-	
+
 	#var scores = SilentWolf.Scores.scores
 	add_loading_scores_message()
 	var sw_result = SilentWolf.Scores.get_scores(10, "main")
 	scores = sw_result.scores
-	# the other leaderboard scores will be called once the main call in finished 
+	# the other leaderboard scores will be called once the main call in finished
 	# (see signal connected above and _on_scores_received function below)
 	# when all the scores are loaded the leaderboard scene can be opened
 
@@ -67,7 +67,7 @@ func _on_CloseButton_pressed() -> void:
 func _on_scores_received(get_scores_result: Dictionary) -> void:
 	var ld_name: String = get_scores_result.ld_name
 	var scores: Array = get_scores_result.scores
-	
+
 	if ld_name == "main":
 		SilentWolf.Scores.get_scores(10, "Weekly")
 		#SilentWolf.Scores.get_scores(10, "Weekly", -1)

@@ -1,5 +1,7 @@
 ﻿namespace GodotSharpRR;
 
+using System;
+
 public enum DIRECTION
 {
     NORTH = 0,
@@ -8,12 +10,14 @@ public enum DIRECTION
     WEST = 3,
 }
 
+[Flags]
 public enum ROBOT
 {
     RED = 0,
     GREEN = 1,
     BLUE = 2,
-    YELLOW = 3,
+    YELLOW = 4,
+    SILVER = 8, // currently is not used
 }
 
 public enum SHAPE

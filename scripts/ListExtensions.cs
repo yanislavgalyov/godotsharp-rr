@@ -1,9 +1,9 @@
-﻿using System;
+﻿namespace GodotSharpRR;
+
+using System;
 using System.Collections.Generic;
 
-namespace GodotSharpRR;
-
-public static class ListsExtensions
+public static class ListExtensions
 {
     private static readonly Random rng = new();
 
