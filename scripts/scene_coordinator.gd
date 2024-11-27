@@ -65,6 +65,7 @@ func append_scene(
 
 	if free_old and scene_parent:
 		for child in scene_parent.get_children():
+			scene_parent.remove_child(child)
 			child.queue_free()
 
 	# var scene_parent: Node = scene_to_swap.get_parent()

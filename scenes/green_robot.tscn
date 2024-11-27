@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3 uid="uid://pvm3ndd7vr0i"]
+
+[ext_resource type="Shader" path="res://shaders/goal_background.gdshader" id="1_bxxme"]
+[ext_resource type="Texture2D" uid="uid://tsbsxavne0sk" path="res://assets/sheet_white1x.png" id="2_5u4j0"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xcn4u"]
+shader = ExtResource("1_bxxme")
+shader_parameter/background_color = Color(1, 1, 1, 0)
+
+[node name="Green" type="Sprite2D"]
+modulate = Color(0, 1, 0, 1)
+material = SubResource("ShaderMaterial_xcn4u")
+position = Vector2(90, -40)
+texture = ExtResource("2_5u4j0")
+region_enabled = true
+region_rect = Rect2(150, 50, 50, 50)

@@ -16,6 +16,11 @@ public partial class Main : Node2D
     private PackedScene squareGoalScene = ResourceLoader.Load<PackedScene>("res://scenes/square_goal.tscn");
     private PackedScene hexagonGoalScene = ResourceLoader.Load<PackedScene>("res://scenes/hexagon_goal.tscn");
 
+    private PackedScene redRobotScene = ResourceLoader.Load<PackedScene>("res://scenes/red_robot.tscn");
+    private PackedScene greenRobotScene = ResourceLoader.Load<PackedScene>("res://scenes/green_robot.tscn");
+    private PackedScene blueRobotScene = ResourceLoader.Load<PackedScene>("res://scenes/blue_robot.tscn");
+    private PackedScene yellowRobotScene = ResourceLoader.Load<PackedScene>("res://scenes/yellow_robot.tscn");
+
     private GodotObject countdownTimer = null!;
 
     private Node sceneCoordinator = null!;
@@ -26,14 +31,16 @@ public partial class Main : Node2D
 
     private Dictionary<ROBOT, Sprite2D> robotSprites = null!;
 
-    private Node2D wallsContainer = null!;
     private Node2D goalsContainer = null!;
+    private Node finalGoalsContainer = null!;
+    private Node2D robotsCotainer = null!;
+    private Node2D wallsContainer = null!;
 
     private TileMapLayer tileMapLayer = null!;
 
-    private Label totalBoards = null!;
-
-    private Label totalMoves = null!;
+    private Label totalBoardsLabel = null!;
+    private Label totalMovesLabel = null!;
+    private Label timesUpLabel = null!;
 
     private ROBOT? selectedRobot;
 
@@ -55,6 +62,8 @@ public partial class Main : Node2D
         this.tileMapLayer = this.GetNode<TileMapLayer>("TileMapLayer");
 
         this.goalsContainer = this.GetNode<Node2D>("Goals");
+        this.finalGoalsContainer = this.GetNode<Node>("FinalGoals");
+        this.robotsCotainer = this.GetNode<Node2D>("Robots");
         this.wallsContainer = this.GetNode<Node2D>("Walls");
 
         this.robotSprites = new Dictionary<ROBOT, Sprite2D>
@@ -65,8 +74,9 @@ public partial class Main : Node2D
             { ROBOT.YELLOW, this.GetNode<Sprite2D>("Robots/Yellow")},
         };
 
-        this.totalBoards = this.GetNode<Label>("TotalBoards");
-        this.totalMoves = this.GetNode<Label>("TotalMoves");
+        this.totalBoardsLabel = this.GetNode<Label>("TotalBoardsLabel");
+        this.totalMovesLabel = this.GetNode<Label>("TotalMovesLabel");
+        this.timesUpLabel = this.GetNode<Label>("TimesUpLabel");
 
         this.countdownTimer = this.GetNode("CountdownTimer");
 
@@ -154,18 +164,14 @@ public partial class Main : Node2D
 
     private void SetupBoard()
     {
+        #region clear phrase
+
         this.currentBoardMoves = new Stack<Board.Move>();
 
+        // robots are kept for each board instead of recreated
         foreach (var item in this.robotSprites)
         {
-            // since robots are not added as children, have to reset their background
             this.SetRobotShaderParam(item.Key, Transparent);
-        }
-
-        foreach (Node child in this.wallsContainer.GetChildren())
-        {
-            this.wallsContainer.RemoveChild(child);
-            child.QueueFree();
         }
 
         foreach (Node child in this.goalsContainer.GetChildren())
@@ -174,8 +180,24 @@ public partial class Main : Node2D
             child.QueueFree();
         }
 
-        this.totalBoards.Text = $"Boards: {this.solvedBoardsCount}";
-        this.totalMoves.Text = $"Moves: {this.totalMovesCount}";
+        foreach (Node child in this.finalGoalsContainer.GetChildren())
+        {
+            this.finalGoalsContainer.RemoveChild(child);
+            child.QueueFree();
+        }
+
+        foreach (Node child in this.wallsContainer.GetChildren())
+        {
+            this.wallsContainer.RemoveChild(child);
+            child.QueueFree();
+        }
+
+        #endregion
+
+        #region set phase
+
+        this.totalBoardsLabel.Text = $"Boards: {this.solvedBoardsCount}";
+        this.totalMovesLabel.Text = $"Moves: {this.totalMovesCount}";
 
         board = Board.CreateBoardRandom(4);
 
@@ -187,21 +209,25 @@ public partial class Main : Node2D
             throw new Exception("Missing goal");
         }
 
+        Node? currentGoalShape = this.InstantiateGoalScene(currentGoal.Shape);
+        this.SetGoal(currentGoalShape as Sprite2D, 8, 7, currentGoal.Robot);
+        this.finalGoalsContainer.AddChild(currentGoalShape);
+
+        Sprite2D? currentGoalRobot = this.InstantiateRobotScene(currentGoal.Robot);
+        if (currentGoalRobot != null)
+        {
+            currentGoalRobot.Position = this.tileMapLayer.MapToLocal(new Vector2I(7, 7));
+            this.finalGoalsContainer.AddChild(currentGoalRobot);
+        }
+
         foreach (Goal goal in goals)
         {
-            if (goal == currentGoal)
-            {
-                Node? currentGoalScene = this.InstantiateGoalScene(goal.Shape);
-                this.SetGoal(currentGoalScene as Sprite2D, 7, 7, goal.Robot);
-                goalsContainer.AddChild(currentGoalScene);
-            }
-
             Node? goalScene = this.InstantiateGoalScene(goal.Shape);
 
             if (goalScene != null)
             {
                 this.SetGoal(goalScene as Sprite2D, goal.X, goal.Y, goal.Robot);
-                goalsContainer.AddChild(goalScene);
+                this.goalsContainer.AddChild(goalScene);
 
                 if (goal == currentGoal)
                 {
@@ -237,6 +263,8 @@ public partial class Main : Node2D
                 }
             }
         }
+
+        #endregion
     }
 
     private void SetSelectedRobot(ROBOT? robot)
@@ -282,7 +310,7 @@ public partial class Main : Node2D
             this.SetRobotPosition(this.selectedRobot.Value);
 
             this.totalMovesCount++;
-            this.totalMoves.Text = $"Moves: {this.totalMovesCount}";
+            this.totalMovesLabel.Text = $"Moves: {this.totalMovesCount}";
             this.currentBoardMoves.Push(move);
 
             if (this.board.IsSolved())
@@ -304,7 +332,7 @@ public partial class Main : Node2D
             this.SetRobotPosition(this.selectedRobot.Value);
 
             this.totalMovesCount--;
-            this.totalMoves.Text = $"Moves: {this.totalMovesCount}";
+            this.totalMovesLabel.Text = $"Moves: {this.totalMovesCount}";
         }
     }
 
@@ -342,19 +370,49 @@ public partial class Main : Node2D
         switch (shape)
         {
             case SHAPE.VORTEX:
-                scene = vortextGoalScene.Instantiate();
+                scene = this.vortextGoalScene.Instantiate();
                 break;
             case SHAPE.CIRCLE:
-                scene = circleGoalScene.Instantiate();
+                scene = this.circleGoalScene.Instantiate();
                 break;
             case SHAPE.TRIANGLE:
-                scene = triangleGoalScene.Instantiate();
+                scene = this.triangleGoalScene.Instantiate();
                 break;
             case SHAPE.SQUARE:
-                scene = squareGoalScene.Instantiate();
+                scene = this.squareGoalScene.Instantiate();
                 break;
             case SHAPE.HEXAGON:
-                scene = hexagonGoalScene.Instantiate();
+                scene = this.hexagonGoalScene.Instantiate();
+                break;
+        }
+
+        return scene;
+    }
+
+    private Sprite2D? InstantiateRobotScene(ROBOT robot)
+    {
+        if (!robot.IsSingleRobot())
+        {
+            return null;
+        }
+
+        Sprite2D? scene = null;
+
+        switch (robot)
+        {
+            case ROBOT.RED:
+                scene = this.redRobotScene.Instantiate() as Sprite2D;
+                break;
+            case ROBOT.GREEN:
+                scene = this.greenRobotScene.Instantiate() as Sprite2D;
+                break;
+            case ROBOT.BLUE:
+                scene = this.blueRobotScene.Instantiate() as Sprite2D;
+                break;
+            case ROBOT.YELLOW:
+                scene = this.yellowRobotScene.Instantiate() as Sprite2D;
+                break;
+            default:
                 break;
         }
 

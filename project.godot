@@ -17,9 +17,9 @@ config/features=PackedStringArray("4.3", "C#", "Forward Plus")
 [autoload]
 
 SilentWolf="*res://addons/silent_wolf/SilentWolf.gd"
-Init="*res://scripts/init.gd"
 SceneCoordinator="*res://scripts/scene_coordinator.gd"
 Events="*res://scripts/events.gd"
+Init="*res://scripts/init.gd"
 
 [display]
 
