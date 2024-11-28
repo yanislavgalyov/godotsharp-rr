@@ -26,15 +26,9 @@ const SWLogger = preload("res://addons/silent_wolf/utils/SWLogger.gd")
 #
 # See https://silentwolf.com for more details
 #
-var config = {
-	"api_key": "FmKF4gtm0Z2RbUAEU62kZ2OZoYLj4PYOURAPIKEY",
-	"game_id": "YOURGAMEID",
-	"log_level": 0
-}
+var config = {"api_key": "FmKF4gtm0Z2RbUAEU62kZ2OZoYLj4PYOURAPIKEY", "game_id": "YOURGAMEID", "log_level": 0}
 
-var scores_config = {
-	"open_scene_on_close": "res://scenes/Splash.tscn"
-}
+var scores_config = {"open_scene_on_close": "res://scenes/Splash.tscn"}
 
 var auth_config = {
 	"redirect_to_scene": "res://scenes/Splash.tscn",
@@ -67,7 +61,7 @@ func _ready():
 	Players.set_script(players_script)
 	add_child(Players)
 	#Multiplayer.set_script(multiplayer_script)
-	#add_child(Multiplayer)
+	add_child(Multiplayer)
 	print("SW ready end timestamp: " + str(SWUtils.get_timestamp()))
 
 
@@ -118,7 +112,7 @@ func configure_auth_session_duration(duration):
 
 
 func free_request(weak_ref, object):
-	if (weak_ref.get_ref()):
+	if weak_ref.get_ref():
 		object.queue_free()
 
 
@@ -129,10 +123,7 @@ func prepare_http_request() -> Dictionary:
 		request.set_use_threads(true)
 	request.process_mode = Node.PROCESS_MODE_ALWAYS
 	get_tree().get_root().call_deferred("add_child", request)
-	var return_dict = {
-		"request": request,
-		"weakref": weakref
-	}
+	var return_dict = {"request": request, "weakref": weakref}
 	return return_dict
 
 
@@ -165,10 +156,7 @@ func send_post_request(http_node, request_url, payload):
 	print("POST headers: " + str(headers))
 	# TODO: This should in fact be the case for all POST requests, make the following code more generic
 	#var post_request_paths: Array[String] = ["post_new_score", "push_player_data"]
-	var paths_with_values_to_hash: Dictionary = {
-		"save_score": ["player_name", "score"],
-		"push_player_data": ["player_name", "player_data"]
-	}
+	var paths_with_values_to_hash: Dictionary = {"save_score": ["player_name", "score"], "push_player_data": ["player_name", "player_data"]}
 	for path in paths_with_values_to_hash:
 		var values_to_hash = []
 		if check_string_in_url(path, request_url):
@@ -218,10 +206,7 @@ func build_result(body: Dictionary) -> Dictionary:
 		error = body.error
 	if "success" in body:
 		success = body.success
-	return {
-		"success": success,
-		"error": error
-	}
+	return {"success": success, "error": error}
 
 
 func check_auth_ready():

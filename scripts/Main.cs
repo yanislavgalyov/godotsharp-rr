@@ -80,7 +80,9 @@ public partial class Main : Node2D
 
         this.countdownTimer = this.GetNode("CountdownTimer");
 
-        this.countdownTimer.Connect("countdown_timer_done", Callable.From(this.CountdownTimerDoneHandler));
+        this.countdownTimer.Connect(
+            "countdown_timer_done",
+            Callable.From(this.CountdownTimerDoneHandler));
 
         this.SetupOnce();
         this.SetupBoard();
@@ -357,6 +359,7 @@ public partial class Main : Node2D
     private void CountdownTimerDoneHandler()
     {
         this.isFrozen = true;
+        this.timesUpLabel.Show();
         if (this.solvedBoardsCount > 0)
         {
             this.init.CallDeferred("save_score", this.solvedBoardsCount);

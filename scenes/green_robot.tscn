@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://tsbsxavne0sk" path="res://assets/sheet_white1x.png" id="2_5u4j0"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_xcn4u"]
+resource_local_to_scene = true
 shader = ExtResource("1_bxxme")
 shader_parameter/background_color = Color(1, 1, 1, 0)
 
