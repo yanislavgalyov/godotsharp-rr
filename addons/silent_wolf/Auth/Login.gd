@@ -51,7 +51,6 @@ func _on_LinkButton_pressed() -> void:
 
 
 func _on_back_button_pressed():
-	print("Back button pressed")
 	SceneCoordinator.append_scene(SilentWolf.auth_config.redirect_to_scene)
 	# get_tree().change_scene_to_file(SilentWolf.auth_config.redirect_to_scene)
 

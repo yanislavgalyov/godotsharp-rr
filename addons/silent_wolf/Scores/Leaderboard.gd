@@ -11,8 +11,6 @@ var max_scores = 10
 
 
 func _ready():
-	print("SilentWolf.Scores.leaderboards: " + str(SilentWolf.Scores.leaderboards))
-	print("SilentWolf.Scores.ldboard_config: " + str(SilentWolf.Scores.ldboard_config))
 	var scores = SilentWolf.Scores.scores
 	#var scores = []
 	if ld_name in SilentWolf.Scores.leaderboards:

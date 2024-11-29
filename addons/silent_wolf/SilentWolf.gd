@@ -26,7 +26,7 @@ const SWLogger = preload("res://addons/silent_wolf/utils/SWLogger.gd")
 #
 # See https://silentwolf.com for more details
 #
-var config = {"api_key": "FmKF4gtm0Z2RbUAEU62kZ2OZoYLj4PYOURAPIKEY", "game_id": "YOURGAMEID", "log_level": 0}
+var config = {"api_key": "YOURAPIKEY", "game_id": "YOURGAMEID", "log_level": 0}
 
 var scores_config = {"open_scene_on_close": "res://scenes/Splash.tscn"}
 
@@ -135,7 +135,6 @@ func send_get_request(http_node: HTTPRequest, request_url: String):
 		"x-sw-godot-version: " + godot_version
 	]
 	headers = add_jwt_token_headers(headers)
-	print("GET headers: " + str(headers))
 	if !http_node.is_inside_tree():
 		await get_tree().create_timer(0.01).timeout
 	SWLogger.debug("Method: GET")
@@ -153,7 +152,6 @@ func send_post_request(http_node, request_url, payload):
 		"x-sw-godot-version: " + godot_version
 	]
 	headers = add_jwt_token_headers(headers)
-	print("POST headers: " + str(headers))
 	# TODO: This should in fact be the case for all POST requests, make the following code more generic
 	#var post_request_paths: Array[String] = ["post_new_score", "push_player_data"]
 	var paths_with_values_to_hash: Dictionary = {"save_score": ["player_name", "score"], "push_player_data": ["player_name", "player_data"]}

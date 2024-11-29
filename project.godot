@@ -21,6 +21,10 @@ SceneCoordinator="*res://scripts/scene_coordinator.gd"
 Events="*res://scripts/events.gd"
 Init="*res://scripts/init.gd"
 
+[debug]
+
+file_logging/enable_file_logging.pc=false
+
 [display]
 
 window/size/viewport_width=1920

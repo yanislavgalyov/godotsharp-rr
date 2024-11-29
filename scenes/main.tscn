@@ -1,10 +1,11 @@
-[gd_scene load_steps=11 format=4 uid="uid://crfvbfcdm3bin"]
+[gd_scene load_steps=16 format=4 uid="uid://crfvbfcdm3bin"]
 
 [ext_resource type="Script" path="res://scripts/Main.cs" id="1_ubo3h"]
 [ext_resource type="Texture2D" uid="uid://tsbsxavne0sk" path="res://assets/sheet_white1x.png" id="2_m0slk"]
 [ext_resource type="PackedScene" uid="uid://c26jdma8xkj7u" path="res://scenes/red_robot.tscn" id="3_a3btc"]
 [ext_resource type="PackedScene" uid="uid://ckf8ybfq0luym" path="res://scenes/countdown_timer.tscn" id="3_cl7bl"]
 [ext_resource type="PackedScene" uid="uid://pvm3ndd7vr0i" path="res://scenes/green_robot.tscn" id="4_0gfme"]
+[ext_resource type="Shader" path="res://shaders/goal_background.gdshader" id="4_qyb74"]
 [ext_resource type="PackedScene" uid="uid://dhlamtjjfxj5b" path="res://scenes/blue_robot.tscn" id="5_10s54"]
 [ext_resource type="PackedScene" uid="uid://yh8q30ulygrl" path="res://scenes/yellow_robot.tscn" id="6_6uha1"]
 
@@ -121,6 +122,26 @@ texture_region_size = Vector2i(50, 50)
 tile_size = Vector2i(50, 50)
 sources/0 = SubResource("TileSetAtlasSource_fhvul")
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0m1bb"]
+resource_local_to_scene = true
+shader = ExtResource("4_qyb74")
+shader_parameter/background_color = Color(1, 1, 1, 0)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_v2ixu"]
+resource_local_to_scene = true
+shader = ExtResource("4_qyb74")
+shader_parameter/background_color = Color(1, 1, 1, 0)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4486s"]
+resource_local_to_scene = true
+shader = ExtResource("4_qyb74")
+shader_parameter/background_color = Color(1, 1, 1, 0)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_uwtsc"]
+resource_local_to_scene = true
+shader = ExtResource("4_qyb74")
+shader_parameter/background_color = Color(1, 1, 1, 0)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dj8kk"]
 bg_color = Color(0.995473, 0.342382, 0.336011, 1)
 corner_radius_top_left = 8
@@ -145,21 +166,25 @@ tile_set = SubResource("TileSet_4pq1o")
 visible = false
 tile_set = SubResource("TileSet_4pq1o")
 
-[node name="Goals" type="Node2D" parent="."]
+[node name="Goals" type="Node" parent="."]
 
 [node name="FinalGoals" type="Node" parent="."]
 
-[node name="Robots" type="Node2D" parent="."]
+[node name="Robots" type="Node" parent="."]
 
 [node name="Red" parent="Robots" instance=ExtResource("3_a3btc")]
+material = SubResource("ShaderMaterial_0m1bb")
 
 [node name="Green" parent="Robots" instance=ExtResource("4_0gfme")]
+material = SubResource("ShaderMaterial_v2ixu")
 
 [node name="Blue" parent="Robots" instance=ExtResource("5_10s54")]
+material = SubResource("ShaderMaterial_4486s")
 
 [node name="Yellow" parent="Robots" instance=ExtResource("6_6uha1")]
+material = SubResource("ShaderMaterial_uwtsc")
 
-[node name="Walls" type="Node2D" parent="."]
+[node name="Walls" type="Node" parent="."]
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(401, 402)

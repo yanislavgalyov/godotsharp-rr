@@ -1,6 +1,6 @@
 extends Node
 
-const SWLogger = preload("res://addons/silent_wolf/utils/SWLogger.gd") 
+const SWLogger = preload("res://addons/silent_wolf/utils/SWLogger.gd")
 
 # Retrieves data stored as JSON in local storage
 # example path: "user://swsession.save"
@@ -20,7 +20,9 @@ static func remove_data(path: String, debug_message: String='Removing data from 
 	if FileAccess.file_exists(path):
 		var file = FileAccess.open(path, FileAccess.WRITE)
 		var data = {}
-		file.store_var(data)
+		var json: String = JSON.stringify(data)
+		#file.store_var(data)
+		file.store_line(json)
 		delete_success = true
 	SWLogger.debug(debug_message)
 	return delete_success
@@ -32,7 +34,6 @@ static func does_file_exist(path: String) -> bool:
 
 static func get_data(path: String) -> Dictionary:
 	var content = {}
-	print("path: " + str(path))
 	if FileAccess.file_exists(path):
 		var file = FileAccess.open(path, FileAccess.READ)
 		var text_content = file.get_as_text()

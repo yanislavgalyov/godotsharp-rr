@@ -39,19 +39,19 @@ func save_player_data(player_name: String, player_data: Dictionary, overwrite: b
 
 func _on_SavePlayerData_request_completed(result, response_code, headers, body) -> void:
 	var status_check = SWUtils.check_http_response(response_code, headers, body)
-	if is_instance_valid(SavePlayerData): 
+	if is_instance_valid(SavePlayerData):
 		SilentWolf.free_request(wrSavePlayerData, SavePlayerData)
-	
+
 	if status_check:
 		var json_body = JSON.parse_string(body.get_string_from_utf8())
 		var sw_result: Dictionary = SilentWolf.build_result(json_body)
 		if json_body.success:
 			SWLogger.info("SilentWolf save player data success for player: " + str(json_body.player_name))
 			var player_name = json_body.player_name
-			#sw_result["player_name"] = player_name 
+			#sw_result["player_name"] = player_name
 		else:
 			SWLogger.error("SilentWolf save player data failure: " + str(json_body.error))
-		sw_save_player_data_complete.emit(sw_result) 
+		sw_save_player_data_complete.emit(sw_result)
 
 
 func get_player_data(player_name: String) -> Node:
@@ -66,13 +66,13 @@ func get_player_data(player_name: String) -> Node:
 		var request_url = "https://api.silentwolf.com/get_player_data/" + str(SilentWolf.config.game_id) + "/" + str(player_name)
 		SilentWolf.send_get_request(GetPlayerData, request_url)
 	return self
-	
-	
+
+
 func _on_GetPlayerData_request_completed(result, response_code, headers, body) -> void:
 	var status_check = SWUtils.check_http_response(response_code, headers, body)
-	if is_instance_valid(GetPlayerData): 
+	if is_instance_valid(GetPlayerData):
 		SilentWolf.free_request(wrGetPlayerData, GetPlayerData)
-	
+
 	if status_check:
 		var json_body = JSON.parse_string(body.get_string_from_utf8())
 		var sw_result: Dictionary = SilentWolf.build_result(json_body)
@@ -121,9 +121,9 @@ func delete_player_data(player_name: String, player_data: Dictionary) -> Node:
 
 func _on_DeletePlayerData_request_completed(result, response_code, headers, body) -> void:
 	var status_check = SWUtils.check_http_response(response_code, headers, body)
-	if is_instance_valid(DeletePlayerData): 
+	if is_instance_valid(DeletePlayerData):
 		DeletePlayerData.queue_free()
-	
+
 	if status_check:
 		var json_body = JSON.parse_string(body.get_string_from_utf8())
 		var sw_result: Dictionary = SilentWolf.build_result(json_body)

@@ -31,10 +31,10 @@ public partial class Main : Node2D
 
     private Dictionary<ROBOT, Sprite2D> robotSprites = null!;
 
-    private Node2D goalsContainer = null!;
+    private Node goalsContainer = null!;
     private Node finalGoalsContainer = null!;
-    private Node2D robotsCotainer = null!;
-    private Node2D wallsContainer = null!;
+    private Node robotsCotainer = null!;
+    private Node wallsContainer = null!;
 
     private TileMapLayer tileMapLayer = null!;
 
@@ -51,8 +51,8 @@ public partial class Main : Node2D
 
     private bool isFrozen = false;
 
-    private readonly Color White = new(1, 1, 1, 1);
-    private readonly Color Transparent = new(1, 1, 1, 0);
+    private static Color White = new(1, 1, 1, .7f);
+    private static Color Transparent = new(1, 1, 1, 0);
 
     public override void _Ready()
     {
@@ -61,10 +61,10 @@ public partial class Main : Node2D
 
         this.tileMapLayer = this.GetNode<TileMapLayer>("TileMapLayer");
 
-        this.goalsContainer = this.GetNode<Node2D>("Goals");
+        this.goalsContainer = this.GetNode<Node>("Goals");
         this.finalGoalsContainer = this.GetNode<Node>("FinalGoals");
-        this.robotsCotainer = this.GetNode<Node2D>("Robots");
-        this.wallsContainer = this.GetNode<Node2D>("Walls");
+        this.robotsCotainer = this.GetNode<Node>("Robots");
+        this.wallsContainer = this.GetNode<Node>("Walls");
 
         this.robotSprites = new Dictionary<ROBOT, Sprite2D>
         {

@@ -17,10 +17,11 @@ func _on_login_complete(sw_result: Dictionary) -> void:
 		label.text = str(sw_result.error)
 
 
-func _on_session_check_complete(sw_result: Dictionary) -> void:
-	if sw_result.success:
-		label.text = "logged in as %s" % SilentWolf.Auth.logged_in_player
-		Events.user_logged_in.emit()
+func _on_session_check_complete(sw_result: Variant) -> void:
+	if sw_result is Dictionary:
+		if sw_result.success:
+			label.text = "logged in as %s" % SilentWolf.Auth.logged_in_player
+			Events.user_logged_in.emit()
 
 
 func _on_sw_logout_complete(_isTrue: bool, _error: String) -> void:
