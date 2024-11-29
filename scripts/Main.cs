@@ -25,7 +25,7 @@ public partial class Main : Node2D
 
     private Node sceneCoordinator = null!;
 
-    private Node init = null!;
+    private Node globalRR = null!;
 
     private Board board = null!;
 
@@ -57,7 +57,7 @@ public partial class Main : Node2D
     public override void _Ready()
     {
         this.sceneCoordinator = this.GetNode("/root/SceneCoordinator");
-        this.init = this.GetNode("/root/Init");
+        this.globalRR = this.GetNode("/root/GlobalRR");
 
         this.tileMapLayer = this.GetNode<TileMapLayer>("TileMapLayer");
 
@@ -362,7 +362,7 @@ public partial class Main : Node2D
         this.timesUpLabel.Show();
         if (this.solvedBoardsCount > 0)
         {
-            this.init.CallDeferred("save_score", this.solvedBoardsCount);
+            this.globalRR.CallDeferred("save_score", this.solvedBoardsCount);
         }
     }
 

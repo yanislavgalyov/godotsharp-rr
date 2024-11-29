@@ -13,7 +13,7 @@ func _ready() -> void:
 	logout_button.button_down.connect(on_logout_button_down)
 	exit_button.pressed.connect(on_exit_button_pressed)
 	ranking_button.button_down.connect(on_ranking_button_down)
-	Events.user_logged_in.connect(on_user_logged_in)
+	GlobalRR.user_logged_in.connect(on_user_logged_in)
 
 	if SilentWolf.Auth.logged_in_player:
 		login_button.hide()
@@ -30,7 +30,7 @@ func on_login_button_down() -> void:
 
 func on_logout_button_down() -> void:
 	SilentWolf.Auth.logout_player()
-	Events.user_logged_out.emit()
+	GlobalRR.user_logged_out.emit()
 	login_button.show()
 	logout_button.hide()
 
