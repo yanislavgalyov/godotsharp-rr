@@ -11,6 +11,9 @@ var max_scores = 10
 
 
 func _ready():
+	if not "Scores" in  SilentWolf:
+		return
+
 	var scores = SilentWolf.Scores.scores
 	#var scores = []
 	if ld_name in SilentWolf.Scores.leaderboards:
@@ -26,6 +29,10 @@ func _ready():
 		scores = sw_result.scores
 		hide_message()
 		render_board(scores, local_scores)
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("Exit"):
+		SceneCoordinator.call_deferred("append_scene", "res://scenes/main_menu.tscn")
 
 
 func render_board(scores: Array, local_scores: Array) -> void:

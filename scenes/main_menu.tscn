@@ -273,3 +273,23 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_xlfqy")
 theme_override_styles/normal = SubResource("StyleBoxFlat_iqe61")
 shortcut = SubResource("Shortcut_0bj5u")
 text = "Exit"
+
+[node name="Help" type="RichTextLabel" parent="."]
+custom_minimum_size = Vector2(400, 250)
+layout_mode = 0
+offset_left = 1157.0
+offset_top = 432.0
+offset_right = 1557.0
+offset_bottom = 682.0
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+bbcode_enabled = true
+text = "[b]R[/b]  - Red robot
+[b]B[/b]  - Blue robot
+[b]G[/b]  - Green robot
+[b]Y[/b]  - Yellow robot
+[b]🡠 🡡 🡢 🡣[/b] to move
+[b]V[/b] to undo move
+[b]Space[/b] to reset Board
+
+[b]N[/b] to start over
+[b]Escape[/b] to exit"
