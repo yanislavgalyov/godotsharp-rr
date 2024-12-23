@@ -3,14 +3,14 @@ extends CanvasLayer
 # inspired by:
 # https://github.com/DaviD4Chirino/Awesome-Scene-Manager/blob/main/addons/awesome_scene_manager/autoloads/SceneManager.gd
 
+signal loading_scene(progress: float)
+signal scene_loaded
+
 var scene_ancestor: Node
 
 var scene_to_load: String = ""
 var loading_resource: bool = false
 var progress: Array = []
-
-signal loading_scene(progress: float)
-signal scene_loaded
 
 
 func _ready():

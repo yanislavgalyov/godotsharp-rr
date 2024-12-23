@@ -1,15 +1,14 @@
 extends Control
 class_name CountdownTimer
 
-@onready var label: Label = $Label
-@onready var timer: Timer = $Timer
+signal countdown_timer_done
 
 @export var countdown_in_seconds: float = 120.0
 
-signal countdown_timer_done
+@onready var label: Label = $Label
+@onready var timer: Timer = $Timer
 
 
-# Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	timer.timeout.connect(_on_timer_timeout)
 	timer.start(countdown_in_seconds)

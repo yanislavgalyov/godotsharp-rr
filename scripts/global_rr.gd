@@ -1,12 +1,12 @@
 extends Node
 
-const SWLogger = preload("res://addons/silent_wolf/utils/SWLogger.gd")
-
 @warning_ignore("unused_signal")
 signal user_logged_in
 
 @warning_ignore("unused_signal")
 signal user_logged_out
+
+const SWLogger = preload("res://addons/silent_wolf/utils/SWLogger.gd")
 
 
 func _ready() -> void:

@@ -1,8 +1,10 @@
-[gd_scene load_steps=2 format=3 uid="uid://dgbsrhpfwfjyu"]
+[gd_scene load_steps=3 format=3 uid="uid://dgbsrhpfwfjyu"]
 
+[ext_resource type="Script" path="res://scripts/goal_sprite_2d.gd" id="1_lkxnp"]
 [ext_resource type="Texture2D" uid="uid://tsbsxavne0sk" path="res://assets/sheet_white1x.png" id="1_oqatf"]
 
 [node name="CircleGoal" type="Sprite2D"]
 texture = ExtResource("1_oqatf")
 region_enabled = true
 region_rect = Rect2(400, 450, 50, 50)
+script = ExtResource("1_lkxnp")

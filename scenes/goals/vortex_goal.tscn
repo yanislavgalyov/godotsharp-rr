@@ -1,9 +1,11 @@
-[gd_scene load_steps=2 format=3 uid="uid://0h8kuhl03kin"]
+[gd_scene load_steps=3 format=3 uid="uid://0h8kuhl03kin"]
 
 [ext_resource type="Texture2D" uid="uid://tsbsxavne0sk" path="res://assets/sheet_white1x.png" id="1_apx77"]
+[ext_resource type="Script" path="res://scripts/goal_sprite_2d.gd" id="1_j7rek"]
 
 [node name="VortexGoal" type="Sprite2D"]
 self_modulate = Color(0.0768358, 0.0768358, 0.0768358, 1)
 texture = ExtResource("1_apx77")
 region_enabled = true
 region_rect = Rect2(300, 150, 50, 50)
+script = ExtResource("1_j7rek")

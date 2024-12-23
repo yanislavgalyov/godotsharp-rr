@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://c26jdma8xkj7u"]
+[gd_scene load_steps=5 format=3 uid="uid://c26jdma8xkj7u"]
 
 [ext_resource type="Shader" path="res://shaders/goal_background.gdshader" id="1_dlpdv"]
 [ext_resource type="Texture2D" uid="uid://tsbsxavne0sk" path="res://assets/sheet_white1x.png" id="2_u6kmk"]
+[ext_resource type="Script" path="res://scripts/robot_sprite_2d.gd" id="3_d2ce1"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ol0q8"]
 resource_local_to_scene = true
@@ -15,3 +16,4 @@ position = Vector2(30, -40)
 texture = ExtResource("2_u6kmk")
 region_enabled = true
 region_rect = Rect2(150, 50, 50, 50)
+script = ExtResource("3_d2ce1")
