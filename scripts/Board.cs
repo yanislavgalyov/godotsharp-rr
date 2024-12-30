@@ -162,7 +162,6 @@ public partial class Board
         int quadrantSW)
     {
         Board b = new(WIDTH, HEIGHT);
-        //add walls and goals
         b.AddQuadrant(quadrantNW, 0);
         b.AddQuadrant(quadrantNE, 1);
         b.AddQuadrant(quadrantSE, 2);
@@ -314,11 +313,16 @@ public partial class Board
                         quadrant.walls[dir, qX + qY * quadrant.width];
                 }
             }
+        }
 
+        qX = 8;
+        for (qY = 0; qY < quadrant.height / 2; ++qY)
+        {
             this.walls[((int)DIRECTION.WEST + qPos) & 3, this.TransformQuadrantPosition(qX, qY, qPos)] |=
                 quadrant.walls[(int)DIRECTION.EAST, qX - 1 + qY * quadrant.width];
         }
 
+        qY = 8;
         for (qX = 0; qX < quadrant.width / 2; ++qX)
         {
             this.walls[((int)DIRECTION.NORTH + qPos) & 3, this.TransformQuadrantPosition(qX, qY, qPos)] |=

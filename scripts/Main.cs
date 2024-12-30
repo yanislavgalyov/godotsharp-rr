@@ -150,7 +150,7 @@ public partial class Main : Node2D
                 "append_scene",
                 "res://scenes/main.tscn");
         }
-        else if (@event.IsActionPressed("DebugSolve"))
+        else if (@event.IsActionPressed("DebugSolve") && OS.IsDebugBuild())
         {
             EmitSignal(SignalName.BoardSolved);
         }

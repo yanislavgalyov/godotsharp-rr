@@ -283,13 +283,13 @@ offset_right = 1557.0
 offset_bottom = 682.0
 theme_override_colors/default_color = Color(0, 0, 0, 1)
 bbcode_enabled = true
-text = "[b]R[/b]  - Red robot
-[b]B[/b]  - Blue robot
-[b]G[/b]  - Green robot
-[b]Y[/b]  - Yellow robot
+text = "[color=red][b]R[/b][/color]  - select RED robot
+[color=blue][b]B[/b][/color]  - select BLUE robot
+[color=green][b]G[/b][/color]  - select GREEN robot
+[color=yellow][b]Y[/b][/color]  - select YELLOW robot
 [b]🡠 🡡 🡢 🡣[/b] to move
 [b]V[/b] to undo move
-[b]Space[/b] to reset Board
+[b]Space[/b] to reset BOARD
 
-[b]N[/b] to start over
+[b]Ctrl + N[/b] to start over
 [b]Escape[/b] to exit"
