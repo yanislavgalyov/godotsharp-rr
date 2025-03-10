@@ -1,8 +1,8 @@
 [gd_scene load_steps=5 format=3 uid="uid://c26jdma8xkj7u"]
 
-[ext_resource type="Shader" path="res://shaders/goal_background.gdshader" id="1_dlpdv"]
+[ext_resource type="Shader" uid="uid://sg5yvsmnc5oi" path="res://shaders/goal_background.gdshader" id="1_dlpdv"]
 [ext_resource type="Texture2D" uid="uid://tsbsxavne0sk" path="res://assets/sheet_white1x.png" id="2_u6kmk"]
-[ext_resource type="Script" path="res://scripts/robot_sprite_2d.gd" id="3_d2ce1"]
+[ext_resource type="Script" uid="uid://bgoamym56vrn5" path="res://scripts/robot_sprite_2d.gd" id="3_d2ce1"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ol0q8"]
 resource_local_to_scene = true

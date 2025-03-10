@@ -203,7 +203,6 @@ func is_solution_01() -> bool:
 # REGION: QUADRANTS
 
 
-# TODO: bug with walls
 func add_quadrant(q_num: int, q_pos: int) -> Board:
 	quadrants[q_pos] = q_num
 	var quadrant = QUADRANTS[q_num]

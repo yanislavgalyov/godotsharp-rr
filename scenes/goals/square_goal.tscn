@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://idxfyaadcgvw"]
 
 [ext_resource type="Texture2D" uid="uid://tsbsxavne0sk" path="res://assets/sheet_white1x.png" id="1_1r6oo"]
-[ext_resource type="Script" path="res://scripts/goal_sprite_2d.gd" id="1_gr2tg"]
+[ext_resource type="Script" uid="uid://bdr2dffbmy548" path="res://scripts/goal_sprite_2d.gd" id="1_gr2tg"]
 
 [node name="SquareGoal" type="Sprite2D"]
 texture = ExtResource("1_1r6oo")

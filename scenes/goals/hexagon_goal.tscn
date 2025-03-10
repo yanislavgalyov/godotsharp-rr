@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://yyqxglx801lx"]
 
-[ext_resource type="Script" path="res://scripts/goal_sprite_2d.gd" id="1_51iqb"]
+[ext_resource type="Script" uid="uid://bdr2dffbmy548" path="res://scripts/goal_sprite_2d.gd" id="1_51iqb"]
 [ext_resource type="Texture2D" uid="uid://tsbsxavne0sk" path="res://assets/sheet_white1x.png" id="1_opobw"]
 
 [node name="HexagonGoal" type="Sprite2D"]

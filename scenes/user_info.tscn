@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://1btqg1w7bafk"]
 
-[ext_resource type="Script" path="res://scripts/user_info.gd" id="1_gw1od"]
+[ext_resource type="Script" uid="uid://crer0r2r5sqjv" path="res://scripts/user_info.gd" id="1_gw1od"]
 
 [node name="CanvasLayer" type="CanvasLayer"]
 physics_interpolation_mode = 2
